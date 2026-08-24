@@ -1,0 +1,8 @@
+# Copy this file to local.properties (git-ignored) and fill in real values.
+# local.properties is never committed — see 00-README.md working rule 5.
+
+sdk.dir=/path/to/Android/sdk
+
+# Discogs public API — used for catalogue lookup only (FR-B1). Exposed to the
+# app via BuildConfig, never hardcoded in source.
+discogs.api.key=YOUR_DISCOGS_API_KEY
