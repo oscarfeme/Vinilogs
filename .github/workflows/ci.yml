@@ -1,0 +1,136 @@
+name: CI
+
+# Quality gates per 02-ARCHITECTURE.md §9: ktlint + detekt, unit tests, Firestore rules unit
+# tests, and Compose UI tests on an emulator (API 34), on every PR.
+#
+# pull_request has no `branches:` filter deliberately: 00-README.md's stacking convention
+# (task branches base off a not-yet-merged dependency branch, not master) means PRs routinely
+# target something other than master — see 03-PHASES-AND-TASKS.md. Filtering to master would
+# mean CI never runs on most of the PRs actually open right now.
+on:
+  pull_request:
+  push:
+    branches: [master]
+  # Diagnostic escape hatch: automatic pull_request/push dispatch has been failing to create
+  # new runs for this repo (investigated 2026-08-25 — settings look correct, manual re-runs of
+  # existing runs work fine, but no new run/check-suite is created for new commits, closes,
+  # reopens, or even a brand-new PR). workflow_dispatch is a different, directly-invoked
+  # trigger path — lets us verify fixes against a specific branch ref without depending on
+  # whatever's stuck. Remove once the automatic trigger is confirmed working again.
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-analysis:
+    name: ktlint + detekt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew ktlintCheck detekt
+
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      # testDebugUnitTest only exists on Android modules (app/core:*/feature:* variants);
+      # plain-JVM modules (core:model) use the "test" task instead. Gradle silently skips a
+      # named task on any subproject that doesn't declare it, so running both together is
+      # safe and covers every module.
+      - run: ./gradlew testDebugUnitTest test
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: "**/build/test-results/**/*.xml"
+          retention-days: 7
+
+  build:
+    name: Assemble debug
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew assembleDebug
+
+  # Activates once T-04 lands firebase/firestore.rules and a rules test harness (T-14 writes
+  # the actual tests). A no-op green check until then, so CI stays meaningful from T-05 on.
+  firestore-rules-tests:
+    name: Firestore rules tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          if [ -f firebase/firestore.rules ] && [ -f firebase/package.json ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.configured == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - if: steps.check.outputs.configured == 'true'
+        working-directory: firebase
+        run: npm ci
+      - if: steps.check.outputs.configured == 'true'
+        working-directory: firebase
+        run: npm test
+      - if: steps.check.outputs.configured != 'true'
+        run: echo "No firebase/firestore.rules test harness yet (lands in T-04/T-14) — skipping."
+
+  instrumented-tests:
+    name: Compose UI tests (emulator API 34)
+    runs-on: macos-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      # Emulator boot on GitHub's hosted macOS runners occasionally fails with
+      # "HVF error: HV_UNSUPPORTED" (Apple's Hypervisor Framework not available on that
+      # particular runner instance) — observed 2026-08-25, confirmed as a runner-infra flake,
+      # not a code issue: it happens before the app or its tests build. A second attempt on a
+      # fresh runner reliably works. Retry once; a real failure on both attempts still fails
+      # the job.
+      - id: emulator-attempt-1
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          # macos-latest is an Apple Silicon (arm64) runner — an x86_64 system image would run
+          # unaccelerated (or fail outright). arm64-v8a is the image that's actually
+          # hardware-accelerated here.
+          arch: arm64-v8a
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
+      - if: steps.emulator-attempt-1.outcome == 'failure'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: arm64-v8a
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
