@@ -12,6 +12,9 @@ dependencies {
     implementation(project(":feature:collection"))
     implementation(project(":feature:discovery"))
 
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.navigation.compose)
+    // Type-safe libs.<dotted> library accessors don't resolve in the root build (Unresolved
+    // reference) — see the fix commit on this branch. findLibrary() is the same catalog,
+    // string-keyed, unaffected.
+    implementation(libs.findLibrary("androidx-activity-compose").get())
+    implementation(libs.findLibrary("androidx-navigation-compose").get())
 }
