@@ -12,7 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import app.vinilogs.core.designsystem.theme.VinilogsTheme
+import app.vinilogs.core.designsystem.theme.spacing
 
 /**
  * Generic failure shell. A primary action (typically retry) is required; a
@@ -33,7 +33,7 @@ fun ErrorState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(VinilogsTheme.spacing.lg),
+            .padding(MaterialTheme.spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -45,14 +45,14 @@ fun ErrorState(
         )
         Button(
             onClick = onPrimaryAction,
-            modifier = Modifier.padding(top = VinilogsTheme.spacing.md),
+            modifier = Modifier.padding(top = MaterialTheme.spacing.md),
         ) {
             Text(primaryActionLabel)
         }
         if (secondaryActionLabel != null && onSecondaryAction != null) {
             TextButton(
                 onClick = onSecondaryAction,
-                modifier = Modifier.padding(top = VinilogsTheme.spacing.xs),
+                modifier = Modifier.padding(top = MaterialTheme.spacing.xs),
             ) {
                 Text(secondaryActionLabel)
             }

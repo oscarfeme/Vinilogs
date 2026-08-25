@@ -5,46 +5,35 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
-import app.vinilogs.core.designsystem.theme.PlaceholderPalette
-import kotlin.math.abs
+import androidx.compose.ui.text.style.TextAlign
+import app.vinilogs.core.designsystem.theme.tabular
+import app.vinilogs.core.designsystem.theme.vinilogsColors
 
 /**
- * Cover art fallback for a record with no Discogs art or a custom image —
- * "a generated placeholder derived from the artist name — never a grey box
- * with an icon" (02-ARCHITECTURE.md §6). Same artist always maps to the same
- * colour, so a collection with several records by one artist stays visually
- * coherent on the shelf.
+ * Cover art fallback for a record with no Discogs art or a custom image — an
+ * `Ink100` square showing the catalogue number, centred. "Never a generic
+ * music-note icon; the catalogue number is the useful thing"
+ * (05-DESIGN-DIRECTION.md §5). Renders an empty square when [catalogNumber] is
+ * null or blank rather than inventing a fallback the spec doesn't define.
  */
 @Composable
 fun CoverPlaceholder(
-    artist: String,
+    catalogNumber: String?,
     modifier: Modifier = Modifier,
 ) {
-    val color = remember(artist) { colorForArtist(artist) }
-    val initial = remember(artist) { initialOf(artist) }
-    val onColor = if (color.luminance() > 0.5f) Color.Black else Color.White
-
     Box(
-        modifier = modifier.background(color),
+        modifier = modifier.background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = initial,
-            style = MaterialTheme.typography.displayMedium,
-            color = onColor,
-        )
+        if (!catalogNumber.isNullOrBlank()) {
+            Text(
+                text = catalogNumber,
+                style = MaterialTheme.typography.labelSmall.tabular(),
+                color = MaterialTheme.vinilogsColors.textTertiary,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
-
-private fun colorForArtist(artist: String): Color {
-    val index = abs(artist.trim().lowercase().hashCode()) % PlaceholderPalette.size
-    return PlaceholderPalette[index]
-}
-
-private fun initialOf(artist: String): String =
-    artist.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"

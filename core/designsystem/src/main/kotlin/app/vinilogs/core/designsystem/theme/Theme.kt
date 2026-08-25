@@ -1,90 +1,44 @@
 package app.vinilogs.core.designsystem.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material3.RippleDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-
-private val LightColorScheme: ColorScheme = lightColorScheme(
-    primary = LightPrimary,
-    onPrimary = LightOnPrimary,
-    primaryContainer = LightPrimaryContainer,
-    onPrimaryContainer = LightOnPrimaryContainer,
-    secondary = LightSecondary,
-    onSecondary = LightOnSecondary,
-    secondaryContainer = LightSecondaryContainer,
-    onSecondaryContainer = LightOnSecondaryContainer,
-    tertiary = LightTertiary,
-    onTertiary = LightOnTertiary,
-    tertiaryContainer = LightTertiaryContainer,
-    onTertiaryContainer = LightOnTertiaryContainer,
-    error = LightError,
-    onError = LightOnError,
-    errorContainer = LightErrorContainer,
-    onErrorContainer = LightOnErrorContainer,
-    background = LightBackground,
-    onBackground = LightOnBackground,
-    surface = LightSurface,
-    onSurface = LightOnSurface,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightOnSurfaceVariant,
-    outline = LightOutline,
-    outlineVariant = LightOutlineVariant,
-    scrim = LightScrim,
-    inverseSurface = LightInverseSurface,
-    inverseOnSurface = LightInverseOnSurface,
-    inversePrimary = LightInversePrimary,
-)
-
-private val DarkColorScheme: ColorScheme = darkColorScheme(
-    primary = DarkPrimary,
-    onPrimary = DarkOnPrimary,
-    primaryContainer = DarkPrimaryContainer,
-    onPrimaryContainer = DarkOnPrimaryContainer,
-    secondary = DarkSecondary,
-    onSecondary = DarkOnSecondary,
-    secondaryContainer = DarkSecondaryContainer,
-    onSecondaryContainer = DarkOnSecondaryContainer,
-    tertiary = DarkTertiary,
-    onTertiary = DarkOnTertiary,
-    tertiaryContainer = DarkTertiaryContainer,
-    onTertiaryContainer = DarkOnTertiaryContainer,
-    error = DarkError,
-    onError = DarkOnError,
-    errorContainer = DarkErrorContainer,
-    onErrorContainer = DarkOnErrorContainer,
-    background = DarkBackground,
-    onBackground = DarkOnBackground,
-    surface = DarkSurface,
-    onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkOnSurfaceVariant,
-    outline = DarkOutline,
-    outlineVariant = DarkOutlineVariant,
-    scrim = DarkScrim,
-    inverseSurface = DarkInverseSurface,
-    inverseOnSurface = DarkInverseOnSurface,
-    inversePrimary = DarkInversePrimary,
-)
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 
 /**
- * Root theme — wraps [MaterialTheme] with the app's colour scheme, type scale
- * and shapes, and additionally exposes [VinilogsTheme.spacing] the same way
- * `MaterialTheme.colorScheme` is exposed. Follows the system light/dark
- * setting by default (NFR-9); no dynamic (Material You) colour, since the app
- * has its own fixed brand identity.
+ * The Vinilogs theme.
+ *
+ *   The interface is black and white. The records are the colour.
+ *
+ * Wrap the whole app in this once, in the single activity. Screens read tokens
+ * from [MaterialTheme], [MaterialTheme.vinilogsColors] and
+ * [MaterialTheme.spacing] — never from the raw `internal` values in Color.kt.
+ *
+ * Dynamic colour (Material You) is **deliberately not supported**: it would tint
+ * the shell with the user's wallpaper and destroy the premise of the system. Do
+ * not add it without an ADR. See 05-DESIGN-DIRECTION.md.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VinilogsTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = if (darkTheme) VinilogsDarkColorScheme else VinilogsLightColorScheme
+    val vinilogsColors = if (darkTheme) DarkVinilogsColors else LightVinilogsColors
 
-    CompositionLocalProvider(LocalVinilogsSpacing provides VinilogsSpacing()) {
+    CompositionLocalProvider(
+        LocalVinilogsColors provides vinilogsColors,
+        LocalSpacing provides DefaultSpacing,
+        LocalRippleConfiguration provides MonochromeRipple,
+    ) {
         MaterialTheme(
             colorScheme = colorScheme,
             typography = VinilogsTypography,
@@ -94,9 +48,44 @@ fun VinilogsTheme(
     }
 }
 
-/** Mirrors `MaterialTheme`'s accessor pattern for tokens it doesn't carry. */
-object VinilogsTheme {
-    val spacing: VinilogsSpacing
-        @Composable
-        get() = LocalVinilogsSpacing.current
+/**
+ * A neutral ripple. Material's default derives its ripple from `primary`, which
+ * here is near-black in light theme and near-white in dark — correct in both, but
+ * pinned explicitly so a future change to `primary` cannot leak a tint into every
+ * press state in the app.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private val MonochromeRipple = RippleConfiguration(
+    color = Color.Unspecified,
+    rippleAlpha = RippleDefaults.RippleAlpha,
+)
+
+// ---------------------------------------------------------------------------
+// Composition locals
+// ---------------------------------------------------------------------------
+
+internal val LocalVinilogsColors = staticCompositionLocalOf<VinilogsColors> {
+    error("VinilogsColors not provided. Wrap your content in VinilogsTheme { }.")
 }
+
+internal val LocalSpacing = staticCompositionLocalOf<Spacing> {
+    error("Spacing not provided. Wrap your content in VinilogsTheme { }.")
+}
+
+/**
+ * Semantic colour roles Material 3's `ColorScheme` has no slot for:
+ * `textSecondary`, `textTertiary`, `textDisabled`, `hairline`, `placeholder`.
+ */
+val MaterialTheme.vinilogsColors: VinilogsColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalVinilogsColors.current
+
+/**
+ * The 4dp spacing grid. Every gap in the app comes from here — a raw `.dp` in a
+ * padding modifier is a review comment.
+ */
+val MaterialTheme.spacing: Spacing
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalSpacing.current

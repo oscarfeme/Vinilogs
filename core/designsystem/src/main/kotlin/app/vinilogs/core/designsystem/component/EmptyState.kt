@@ -15,7 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import app.vinilogs.core.designsystem.theme.VinilogsTheme
+import app.vinilogs.core.designsystem.theme.spacing
 
 /**
  * "Empty states are written, not decorated. Each one names the next action...
@@ -34,7 +34,7 @@ fun EmptyState(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .padding(VinilogsTheme.spacing.lg),
+            .padding(MaterialTheme.spacing.lg),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -45,7 +45,7 @@ fun EmptyState(
                 // 48dp: large enough to read as an illustration, not a button.
                 modifier = Modifier
                     .size(48.dp)
-                    .padding(bottom = VinilogsTheme.spacing.md),
+                    .padding(bottom = MaterialTheme.spacing.md),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -57,7 +57,7 @@ fun EmptyState(
         )
         Button(
             onClick = onAction,
-            modifier = Modifier.padding(top = VinilogsTheme.spacing.md),
+            modifier = Modifier.padding(top = MaterialTheme.spacing.md),
         ) {
             Text(actionLabel)
         }
