@@ -12,11 +12,13 @@ dependencies {
 
     // Firebase (T-04) — Auth, Firestore, Storage per 00-README.md's locked backend decision.
     // BOM manages the individual SDK versions; repository implementations land in T-08/T-11/T-13.
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
-    implementation(libs.kotlinx.coroutines.play.services)
+    // Type-safe libs.<dotted> library accessors don't resolve in the root build (Unresolved
+    // reference) — findLibrary() is the same catalog, string-keyed, unaffected.
+    implementation(platform(libs.findLibrary("firebase-bom").get()))
+    implementation(libs.findLibrary("firebase-auth").get())
+    implementation(libs.findLibrary("firebase-firestore").get())
+    implementation(libs.findLibrary("firebase-storage").get())
+    implementation(libs.findLibrary("kotlinx-coroutines-play-services").get())
 }
 
 // Room and Retrofit (Discogs) data sources are added by the tasks that implement each source

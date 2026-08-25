@@ -9,7 +9,10 @@ plugins {
 // when the file is present keeps a fresh checkout buildable before anyone has downloaded a
 // real config, matching T-01's "written, not compiled" constraint.
 if (file("google-services.json").exists()) {
-    apply(plugin = libs.plugins.google.services.get().pluginId)
+    // Type-safe libs.plugins.<dotted> accessors don't resolve in the root build here either
+    // (same class of bug as the library accessors below) — findPlugin() is the same catalog,
+    // string-keyed, unaffected. Matches the pattern build-logic/AndroidCompose.kt already uses.
+    apply(plugin = libs.findPlugin("google-services").get().get().pluginId)
 }
 
 dependencies {
