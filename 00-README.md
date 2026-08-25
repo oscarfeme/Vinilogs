@@ -7,7 +7,7 @@
 Android app for cataloguing a personal vinyl record collection, and for browsing other
 collectors' public shelves.
 
-These five documents are the source of truth for all agents working on this project. Read
+These six documents are the source of truth for all agents working on this project. Read
 them in order before writing code.
 
 | Document | Purpose |
@@ -17,6 +17,7 @@ them in order before writing code.
 | `02-ARCHITECTURE.md` | How it is built: layers, modules, data model, APIs |
 | `03-PHASES-AND-TASKS.md` | Phase plan and numbered tasks assigned to agent tracks |
 | `04-ALT-BACKEND.md` | Contingency only — self-hosted backend spec. **Not** to be implemented for v1.0 |
+| `05-DESIGN-DIRECTION.md` | Visual design system: colour, type, space/shape, components, motion. Locked for v1.0 — see its own §-level ADR requirement |
 
 ## Purpose
 

@@ -198,7 +198,9 @@ app.
 ## 6. Design system notes
 
 `core:designsystem` is not a dumping ground for defaults. It carries the app's character and
-is built once, in T-02, before any feature screen.
+is built once, in T-02, before any feature screen. See `05-DESIGN-DIRECTION.md` for the full,
+locked visual spec (colour ramp, type scale, spacing/shape tokens, component specs,
+accessibility floor) — this section states the principles the doc implements.
 
 - **Covers first.** `VinylCard` renders sleeve art at a true 1:1 aspect ratio with a subtle
   edge treatment. Missing art gets a generated placeholder derived from the artist name — never
