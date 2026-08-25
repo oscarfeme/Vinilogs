@@ -39,7 +39,11 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew testDebugUnitTest
+      # testDebugUnitTest only exists on Android modules (app/core:*/feature:* variants);
+      # plain-JVM modules (core:model) use the "test" task instead. Gradle silently skips a
+      # named task on any subproject that doesn't declare it, so running both together is
+      # safe and covers every module.
+      - run: ./gradlew testDebugUnitTest test
       - if: always()
         uses: actions/upload-artifact@v4
         with:
