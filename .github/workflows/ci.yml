@@ -108,13 +108,29 @@ jobs:
           distribution: temurin
           java-version: "17"
       - uses: gradle/actions/setup-gradle@v4
-      - uses: reactivecircus/android-emulator-runner@v2
+      # Emulator boot on GitHub's hosted macOS runners occasionally fails with
+      # "HVF error: HV_UNSUPPORTED" (Apple's Hypervisor Framework not available on that
+      # particular runner instance) — observed 2026-08-25, confirmed as a runner-infra flake,
+      # not a code issue: it happens before the app or its tests build. A second attempt on a
+      # fresh runner reliably works. Retry once; a real failure on both attempts still fails
+      # the job.
+      - id: emulator-attempt-1
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           target: google_apis
           # macos-latest is an Apple Silicon (arm64) runner — an x86_64 system image would run
           # unaccelerated (or fail outright). arm64-v8a is the image that's actually
           # hardware-accelerated here.
+          arch: arm64-v8a
+          disable-animations: true
+          script: ./gradlew connectedDebugAndroidTest
+      - if: steps.emulator-attempt-1.outcome == 'failure'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
           arch: arm64-v8a
           disable-animations: true
           script: ./gradlew connectedDebugAndroidTest
