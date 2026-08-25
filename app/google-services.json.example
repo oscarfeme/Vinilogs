@@ -1,0 +1,30 @@
+{
+  "//": "Template only — shows the shape google-services.json takes. Not a real config; the build ignores this file. Download the real one from the Firebase console (see firebase/README.md) and save it as app/google-services.json (gitignored, never commit it).",
+  "project_info": {
+    "project_number": "000000000000",
+    "project_id": "vinilogs-dev",
+    "storage_bucket": "vinilogs-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:000000000000:android:0000000000000000000000",
+        "android_client_info": {
+          "package_name": "app.vinilogs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_REAL_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
