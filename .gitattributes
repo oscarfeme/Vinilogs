@@ -1,0 +1,8 @@
+# Gradle wrapper — must stay LF regardless of the committing OS's line-ending settings, or CI
+# (Linux/macOS) fails to run ./gradlew. (The executable bit is tracked separately in the
+# index — text=eol doesn't control that — but gradlew is committed as mode 100755.)
+gradlew text eol=lf
+gradlew.bat text eol=crlf
+
+*.sh text eol=lf
+*.jar binary
