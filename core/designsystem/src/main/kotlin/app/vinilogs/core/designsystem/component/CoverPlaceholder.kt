@@ -46,5 +46,7 @@ private fun colorForArtist(artist: String): Color {
     return PlaceholderPalette[index]
 }
 
-private fun initialOf(artist: String): String =
-    artist.trim().firstOrNull()?.uppercaseChar()?.toString() ?: "?"
+private fun initialOf(artist: String): String {
+    val firstChar = artist.trim().firstOrNull() ?: return "?"
+    return firstChar.uppercaseChar().toString()
+}
