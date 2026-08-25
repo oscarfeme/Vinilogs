@@ -13,8 +13,11 @@ dependencies {
     // Exposed as `api`, not `testImplementation`: this module's whole purpose
     // is to be consumed as test infrastructure by other modules' test source
     // sets (fake repositories, coroutine test rule, Compose test helpers — T-07).
-    api(libs.junit.jupiter.api)
-    api(libs.kotlinx.coroutines.test)
-    api(libs.turbine)
-    api(libs.mockk)
+    // Type-safe libs.<dotted> library accessors don't resolve in the root build (Unresolved
+    // reference) — see the base branch's fix commit. findLibrary() is the same catalog,
+    // string-keyed, unaffected.
+    api(libs.findLibrary("junit-jupiter-api").get())
+    api(libs.findLibrary("kotlinx-coroutines-test").get())
+    api(libs.findLibrary("turbine").get())
+    api(libs.findLibrary("mockk").get())
 }

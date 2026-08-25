@@ -11,6 +11,13 @@ on:
   pull_request:
   push:
     branches: [master]
+  # Diagnostic escape hatch: automatic pull_request/push dispatch has been failing to create
+  # new runs for this repo (investigated 2026-08-25 — settings look correct, manual re-runs of
+  # existing runs work fine, but no new run/check-suite is created for new commits, closes,
+  # reopens, or even a brand-new PR). workflow_dispatch is a different, directly-invoked
+  # trigger path — lets us verify fixes against a specific branch ref without depending on
+  # whatever's stuck. Remove once the automatic trigger is confirmed working again.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
