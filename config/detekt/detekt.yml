@@ -1,0 +1,30 @@
+---
+# Overrides on top of detekt's default ruleset (buildUponDefaultConfig = true in build.gradle.kts).
+# First real run of detekt against actual code (T-05 CI, 2026-08-25) found these are noise for
+# a Compose UI codebase specifically, not real issues -- see each rule's comment.
+
+style:
+  MagicNumber:
+    active: false
+    # Every colour token in core:designsystem/theme is a Color(0xFF......) literal, and every
+    # spacing/shape token is a raw .dp value -- that's the entire content of a design-token
+    # file, not something to name a constant for. This is the single most commonly disabled
+    # detekt rule in real-world Android/Compose projects for exactly this reason.
+
+naming:
+  FunctionNaming:
+    active: true
+    ignoreAnnotated: ["Composable"]
+    # @Composable functions are conventionally PascalCase (they read as components) --
+    # without this override every composable in the app fails naming.
+
+complexity:
+  LongParameterList:
+    active: true
+    functionThreshold: 8
+    constructorThreshold: 8
+    ignoreDefaultParameters: true
+    # Composables legitimately take more parameters than typical functions (content slots,
+    # modifiers, multiple optional callbacks) -- most of ErrorState's 6 parameters have
+    # defaults; ignoreDefaultParameters keeps this rule meaningful instead of just raising
+    # the threshold everywhere.
