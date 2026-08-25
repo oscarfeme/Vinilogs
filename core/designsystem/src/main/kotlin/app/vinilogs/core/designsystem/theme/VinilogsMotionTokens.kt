@@ -41,5 +41,6 @@ fun rememberReducedMotionEnabled(): Boolean {
 
 /** Returns 0 when the system asks for reduced motion, [base] otherwise. */
 @Composable
-fun motionDurationMillis(base: Int): Int =
-    if (rememberReducedMotionEnabled()) 0 else base
+fun motionDurationMillis(base: Int): Int {
+    return if (rememberReducedMotionEnabled()) 0 else base
+}
