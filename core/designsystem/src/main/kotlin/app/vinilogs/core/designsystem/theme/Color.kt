@@ -20,10 +20,6 @@ import androidx.compose.ui.graphics.Color
  * See 05-DESIGN-DIRECTION.md §2.
  */
 
-// ---------------------------------------------------------------------------
-// Light ramp
-// ---------------------------------------------------------------------------
-
 internal val LightInk900 = Color(0xFF0A0A0A) // primary text, primary fill, active icons
 internal val LightInk700 = Color(0xFF3D3D3D) // secondary text, subtitles
 internal val LightInk500 = Color(0xFF686868) // meta text, placeholders, inactive icons
@@ -131,25 +127,20 @@ internal val VinilogsLightColorScheme: ColorScheme = lightColorScheme(
     onPrimary = LightBackground,
     primaryContainer = LightInk100,
     onPrimaryContainer = LightInk900,
-
     secondary = LightInk700,
     onSecondary = LightBackground,
     secondaryContainer = LightInk100,
     onSecondaryContainer = LightInk900,
-
     tertiary = LightInk500,
     onTertiary = LightBackground,
     tertiaryContainer = LightInk100,
     onTertiaryContainer = LightInk900,
-
     background = LightBackground,
     onBackground = LightInk900,
-
     surface = LightSurface,
     onSurface = LightInk900,
     surfaceVariant = LightInk100,
     onSurfaceVariant = LightInk700,
-
     surfaceContainerLowest = LightSurface,
     surfaceContainerLow = LightSurface,
     surfaceContainer = LightBackground,
@@ -157,22 +148,18 @@ internal val VinilogsLightColorScheme: ColorScheme = lightColorScheme(
     surfaceContainerHighest = LightInk100,
     surfaceDim = LightBackground,
     surfaceBright = LightSurface,
-
     // `outline` is what Material draws around OutlinedTextField / OutlinedButton,
     // so it carries the 3:1 control token. `outlineVariant` is HorizontalDivider,
     // which is decorative and stays light.
     outline = LightInk400,
     outlineVariant = LightInk200,
-
     error = LightAlert,
     onError = Color(0xFFFFFFFF),
     errorContainer = Color(0xFFF9DEDC),
     onErrorContainer = Color(0xFF410E0B),
-
     inverseSurface = LightInk900,
     inverseOnSurface = LightBackground,
     inversePrimary = DarkInk900,
-
     scrim = Color(0xFF000000),
 )
 
@@ -181,25 +168,20 @@ internal val VinilogsDarkColorScheme: ColorScheme = darkColorScheme(
     onPrimary = DarkBackground,
     primaryContainer = DarkInk100,
     onPrimaryContainer = DarkInk900,
-
     secondary = DarkInk700,
     onSecondary = DarkBackground,
     secondaryContainer = DarkInk100,
     onSecondaryContainer = DarkInk900,
-
     tertiary = DarkInk500,
     onTertiary = DarkBackground,
     tertiaryContainer = DarkInk100,
     onTertiaryContainer = DarkInk900,
-
     background = DarkBackground,
     onBackground = DarkInk900,
-
     surface = DarkSurface,
     onSurface = DarkInk900,
     surfaceVariant = DarkInk100,
     onSurfaceVariant = DarkInk700,
-
     surfaceContainerLowest = DarkBackground,
     surfaceContainerLow = DarkSurface,
     surfaceContainer = DarkSurface,
@@ -207,18 +189,14 @@ internal val VinilogsDarkColorScheme: ColorScheme = darkColorScheme(
     surfaceContainerHighest = DarkInk100,
     surfaceDim = DarkBackground,
     surfaceBright = DarkInk100,
-
     outline = DarkInk400,
     outlineVariant = DarkInk200,
-
     error = DarkAlert,
     onError = Color(0xFF601410),
     errorContainer = Color(0xFF8C1D18),
     onErrorContainer = Color(0xFFF9DEDC),
-
     inverseSurface = DarkInk900,
     inverseOnSurface = DarkBackground,
     inversePrimary = LightInk900,
-
     scrim = Color(0xFF000000),
 )

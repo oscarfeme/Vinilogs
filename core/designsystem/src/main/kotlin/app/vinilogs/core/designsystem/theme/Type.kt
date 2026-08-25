@@ -39,9 +39,7 @@ private const val FEATURE_TABULAR_NUMS = "tnum"
 fun TextStyle.tabular(): TextStyle = copy(fontFeatureSettings = FEATURE_TABULAR_NUMS)
 
 val VinilogsTypography = Typography(
-
     // --- Headlines: negative tracking, SemiBold -----------------------------
-
     headlineLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,
@@ -63,9 +61,7 @@ val VinilogsTypography = Typography(
         lineHeight = 32.sp,
         letterSpacing = (-0.3).sp,
     ),
-
     // --- Titles ------------------------------------------------------------
-
     titleLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,
@@ -87,9 +83,7 @@ val VinilogsTypography = Typography(
         lineHeight = 20.sp,
         letterSpacing = 0.sp,
     ),
-
     // --- Body --------------------------------------------------------------
-
     bodyLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.Normal,
@@ -111,9 +105,7 @@ val VinilogsTypography = Typography(
         lineHeight = 16.sp,
         letterSpacing = 0.1.sp,
     ),
-
     // --- Labels: positive tracking; the two smallest are uppercase ----------
-
     labelLarge = TextStyle(
         fontFamily = Inter,
         fontWeight = FontWeight.SemiBold,

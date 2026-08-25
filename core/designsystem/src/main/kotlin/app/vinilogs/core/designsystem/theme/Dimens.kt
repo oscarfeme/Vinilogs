@@ -33,25 +33,20 @@ data class Spacing(
     val xxl: Dp = 32.dp,
     /** Around empty states. */
     val xxxl: Dp = 48.dp,
-
     /**
      * Standard screen horizontal gutter. Deliberately wider than Android's
      * default 16dp — whitespace is the primary tool of this system.
      */
     val screenHorizontal: Dp = 20.dp,
-
     /**
      * The shelf grid is the one exception to [screenHorizontal]: it sits at 16dp
      * so a third column of sleeves stays legible on a small phone.
      */
     val shelfHorizontal: Dp = 16.dp,
-
     /** Minimum touch target, regardless of the drawn size of the control. */
     val minTouchTarget: Dp = 48.dp,
-
     /** Every rule in the app. Never 0.5dp — it disappears on ldpi. */
     val hairline: Dp = 1.dp,
-
     /** Focused text field underline, and destructive outlines. */
     val hairlineEmphasis: Dp = 2.dp,
 )
