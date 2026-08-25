@@ -14,5 +14,9 @@ fun HapticFeedback.destructiveConfirm() {
 }
 
 fun HapticFeedback.recordAdded() {
-    performHapticFeedback(HapticFeedbackType.Confirm)
+    // HapticFeedbackType.Confirm needs Compose UI 1.8+; this project is pinned to the
+    // 2024.10.01 BOM (~1.7.x), which only exposes LongPress and TextHandleMove. TextHandleMove
+    // is the only one left that reads as a distinct, positive tap rather than a repeat of
+    // destructiveConfirm's LongPress.
+    performHapticFeedback(HapticFeedbackType.TextHandleMove)
 }
