@@ -12,12 +12,12 @@ if (file("google-services.json").exists()) {
     // Type-safe libs.plugins.<dotted> accessors don't resolve in the root build here either
     // (same class of bug as the library accessors below) — findPlugin() is the same catalog,
     // string-keyed, unaffected. Matches the pattern build-logic/AndroidCompose.kt already uses.
-    val googleServicesPluginId =
-        libs.findPlugin("google-services")
-            .get()
-            .get()
-            .pluginId
-    apply(plugin = googleServicesPluginId)
+    // One call per line deliberately -- ktlint's chain-wrapping rule kept disagreeing with
+    // every multi-call-per-line arrangement tried here.
+    val googleServicesPluginOptional = libs.findPlugin("google-services")
+    val googleServicesPluginProvider = googleServicesPluginOptional.get()
+    val googleServicesPlugin = googleServicesPluginProvider.get()
+    apply(plugin = googleServicesPlugin.pluginId)
 }
 
 dependencies {
