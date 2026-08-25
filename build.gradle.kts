@@ -16,9 +16,11 @@ plugins {
 
 // T-05 (CI): applied to every module uniformly rather than via a build-logic
 // convention plugin, since ktlint/detekt need no per-module customisation
-// today. Both run with their built-in default rule sets — no project
-// detekt.yml yet. Revisit as a convention plugin if per-module config is
-// ever needed.
+// today. Overrides on top of the default rule sets live in config/detekt/detekt.yml
+// and .editorconfig — added once the first real CI run found the defaults are
+// mostly noise for a Compose UI codebase (MagicNumber on every Color(0xFF..)
+// literal, FunctionNaming on every @Composable, ktlint's multiline-expression-
+// wrapping fighting the project's Modifier-chain style). See those files' comments.
 subprojects {
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
     apply(plugin = "io.gitlab.arturbosch.detekt")
@@ -30,5 +32,6 @@ subprojects {
     extensions.configure<io.gitlab.arturbosch.detekt.extensions.DetektExtension> {
         buildUponDefaultConfig = true
         allRules = false
+        config.setFrom(files("$rootDir/config/detekt/detekt.yml"))
     }
 }
