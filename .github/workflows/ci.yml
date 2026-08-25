@@ -1,10 +1,14 @@
 name: CI
 
 # Quality gates per 02-ARCHITECTURE.md §9: ktlint + detekt, unit tests, Firestore rules unit
-# tests, and Compose UI tests on an emulator (API 34), on every PR into master.
+# tests, and Compose UI tests on an emulator (API 34), on every PR.
+#
+# pull_request has no `branches:` filter deliberately: 00-README.md's stacking convention
+# (task branches base off a not-yet-merged dependency branch, not master) means PRs routinely
+# target something other than master — see 03-PHASES-AND-TASKS.md. Filtering to master would
+# mean CI never runs on most of the PRs actually open right now.
 on:
   pull_request:
-    branches: [master]
   push:
     branches: [master]
 
