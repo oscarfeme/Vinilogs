@@ -14,7 +14,9 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<LibraryExtension> {
                 // Each module sets its own namespace in its build.gradle.kts —
                 // AGP requires a unique one per module.
-                targetSdk = 35
+                defaultConfig {
+                    targetSdk = 35
+                }
 
                 configureKotlinAndroid(this)
             }
