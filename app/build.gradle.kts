@@ -12,6 +12,11 @@ dependencies {
     implementation(project(":feature:collection"))
     implementation(project(":feature:discovery"))
 
-    implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.navigation.compose)
+    // Type-safe libs.androidx.activity.compose / libs.androidx.navigation.compose accessors
+    // don't resolve here (Unresolved reference: androidx) — likely the version catalog's
+    // androidx-compose-ui* aliases being simultaneously a leaf and a namespace prefix breaks
+    // accessor generation for the whole androidx tree. findLibrary() is the same catalog,
+    // looked up by string instead of the generated accessor, and isn't affected.
+    implementation(libs.findLibrary("androidx-activity-compose").get())
+    implementation(libs.findLibrary("androidx-navigation-compose").get())
 }
