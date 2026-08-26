@@ -19,7 +19,14 @@ dependencies {
     compileOnly(libs.android.gradlePlugin)
     compileOnly(libs.kotlin.gradlePlugin)
     compileOnly(libs.kotlin.composeCompiler.gradlePlugin)
-    compileOnly(libs.ksp.gradlePlugin)
+    // No compileOnly(libs.ksp.gradlePlugin): AndroidHiltConventionPlugin only applies KSP by
+    // string id (pluginManager.apply("com.google.devtools.ksp")), never references its Gradle
+    // plugin classes, so it doesn't need the jar on build-logic's own classpath. The version
+    // resolved at consuming-module apply time comes from the root build.gradle.kts's
+    // `alias(libs.plugins.ksp) apply false`. This matters because build-logic compiles with
+    // kotlin-dsl's Gradle-embedded Kotlin compiler (capped well below the app's own Kotlin
+    // pin — see ADR-7), which can't read newer KSP releases' binary metadata; keeping the jar
+    // off this classpath sidesteps that instead of chasing a Gradle wrapper bump.
     compileOnly(libs.hilt.gradlePlugin)
 }
 
