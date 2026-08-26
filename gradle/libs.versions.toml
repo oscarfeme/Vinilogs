@@ -29,8 +29,19 @@ firebaseBom = "34.18.0"
 # Image loading (00-README.md locked decision)
 coil = "2.7.0"
 
-# kotlinx.serialization — backs Navigation Compose's type-safe routes
+# kotlinx.serialization — backs Navigation Compose's type-safe routes and (T-12) the Discogs
+# JSON DTOs
 kotlinxSerializationJson = "1.7.3"
+
+# Discogs client (T-12) — Retrofit + OkHttp + the kotlinx.serialization converter, per
+# 00-README.md's locked "Discogs public API (lookup only)" decision.
+retrofit = "3.0.0"
+# Pinned explicitly rather than left to Retrofit's own transitive default: Retrofit 3.0.0's
+# release notes say it upgraded to OkHttp 4.12, so matching that exactly (rather than jumping
+# to the newer OkHttp 5.x line, a bigger API surface change) is the safer bet against the kind
+# of cross-library version friction ADR-7 already hit once this session with Kotlin/KSP/Hilt/AGP.
+okhttp = "4.12.0"
+retrofitKotlinxSerializationConverter = "1.0.0"
 
 # Testing — locked stack per 00-README.md (JUnit5 + Turbine + MockK)
 junit5 = "5.11.3"
@@ -65,6 +76,12 @@ coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coi
 
 # Serialization
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+
+# Discogs client (T-12)
+retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-kotlinx-serialization-converter = { group = "com.jakewharton.retrofit", name = "retrofit2-kotlinx-serialization-converter", version.ref = "retrofitKotlinxSerializationConverter" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
 
 # DI
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
