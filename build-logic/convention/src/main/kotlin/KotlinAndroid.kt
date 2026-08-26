@@ -12,19 +12,17 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinAndroidProjectExtension
  * "org.jetbrains.kotlin.android" plugin before invoking this.
  */
 internal fun Project.configureKotlinAndroid(
-    commonExtension: CommonExtension<*, *, *, *, *, *>,
+    commonExtension: CommonExtension,
 ) {
+    // AGP 9's CommonExtension is no longer generic, and the lambda-taking
+    // `defaultConfig { }`/`compileOptions { }` DSL builders only exist on the
+    // leaf extension types (ApplicationExtension/LibraryExtension) — mutate the
+    // shared base properties directly instead.
     commonExtension.apply {
         compileSdk = 35
-
-        defaultConfig {
-            minSdk = 26
-        }
-
-        compileOptions {
-            sourceCompatibility = JavaVersion.VERSION_17
-            targetCompatibility = JavaVersion.VERSION_17
-        }
+        defaultConfig.minSdk = 26
+        compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+        compileOptions.targetCompatibility = JavaVersion.VERSION_17
     }
 
     extensions.configure<KotlinAndroidProjectExtension> {
