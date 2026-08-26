@@ -1,8 +1,8 @@
 [versions]
 # Build tooling
 agp = "8.6.1"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.28"
+kotlin = "2.3.21"
+ksp = "2.3.11"
 
 # Static analysis (T-05 CI)
 ktlint = "14.2.0"
