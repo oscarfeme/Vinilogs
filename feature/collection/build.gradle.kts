@@ -8,8 +8,10 @@ android {
 }
 
 dependencies {
-    // Backs this module's type-safe navigation routes.
-    implementation(libs.kotlinx.serialization.json)
+    // Backs this module's type-safe navigation routes. Type-safe libs.<dotted> library
+    // accessors don't resolve in the root build (Unresolved reference) — findLibrary()
+    // is the same catalog, string-keyed, unaffected.
+    implementation(libs.findLibrary("kotlinx-serialization-json").get())
 }
 
 // Shelf, record detail, add/edit record, stats (T-15–T-18, T-26, T-27).

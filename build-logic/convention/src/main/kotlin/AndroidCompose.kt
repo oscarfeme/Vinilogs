@@ -1,7 +1,6 @@
 import com.android.build.api.dsl.CommonExtension
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies
-import org.gradle.kotlin.dsl.platform
 
 /**
  * Enables Compose on an application or library module: the K2 Compose compiler
