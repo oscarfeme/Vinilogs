@@ -8,7 +8,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:model"))
+    // api, not implementation: the repository interfaces added in T-07
+    // (AuthRepository/CollectionRepository/UserRepository) expose core:model types
+    // (User, Record, etc.) in their own public signatures, so consumers of core:data need
+    // those types visible transitively.
+    api(project(":core:model"))
 
     // Firebase (T-04) — Auth, Firestore, Storage per 00-README.md's locked backend decision.
     // BOM manages the individual SDK versions; repository implementations land in T-08/T-11/T-13.
