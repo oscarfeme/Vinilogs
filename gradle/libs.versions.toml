@@ -1,8 +1,12 @@
 [versions]
 # Build tooling
-agp = "8.6.1"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.28"
+agp = "9.0.1"
+kotlin = "2.3.21"
+ksp = "2.3.0"
+
+# Static analysis (T-05 CI)
+ktlint = "14.2.0"
+detekt = "1.23.8"
 
 # AndroidX
 coreKtx = "1.13.1"
@@ -12,14 +16,28 @@ composeBom = "2024.10.01"
 navigationCompose = "2.8.3"
 
 # DI
-hilt = "2.52"
+hilt = "2.60.1"
 hiltNavigationCompose = "1.2.0"
 
 # Coroutines
 coroutines = "1.9.0"
 
+# Firebase (T-04) — Auth, Firestore, Storage per 00-README.md's locked backend decision
+googleServices = "4.5.0"
+firebaseBom = "34.18.0"
+
+# Image loading (00-README.md locked decision)
+coil = "2.7.0"
+
+# kotlinx.serialization — backs Navigation Compose's type-safe routes
+kotlinxSerializationJson = "1.7.3"
+
 # Testing — locked stack per 00-README.md (JUnit5 + Turbine + MockK)
 junit5 = "5.11.3"
+# JUnit Platform (not Jupiter) versioning is separate but released in lockstep with the
+# Jupiter version above (5.11.3 <-> platform 1.11.3). Gradle 9 no longer auto-resolves the
+# platform launcher onto the test runtime classpath -- see TestingConfig.kt.
+junitPlatformLauncher = "1.11.3"
 turbine = "1.1.0"
 mockk = "1.13.13"
 
@@ -40,6 +58,13 @@ androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "u
 androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+
+# Image loading
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 # DI
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
@@ -50,12 +75,21 @@ hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testi
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Firebase — versions resolved via the BOM. Main modules only: BoM 34.x removed the -ktx
+# artifacts and folded their Kotlin extensions into the main modules.
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 
 # Testing
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
 junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit5" }
 junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit5" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher", version.ref = "junitPlatformLauncher" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 mockk-android = { group = "io.mockk", name = "mockk-android", version.ref = "mockk" }
@@ -73,8 +107,12 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 
 # Registered so this build-logic module can apply its own convention plugins.
 vinilogs-android-application = { id = "vinilogs.android.application" }

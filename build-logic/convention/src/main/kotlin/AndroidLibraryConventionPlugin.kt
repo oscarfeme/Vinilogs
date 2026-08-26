@@ -14,7 +14,12 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
             extensions.configure<LibraryExtension> {
                 // Each module sets its own namespace in its build.gradle.kts —
                 // AGP requires a unique one per module.
-                defaultConfig {
+                // AGP 9 removes targetSdk from the library variant's defaultConfig
+                // entirely; it now lives on testOptions/lint instead.
+                testOptions {
+                    targetSdk = 35
+                }
+                lint {
                     targetSdk = 35
                 }
 

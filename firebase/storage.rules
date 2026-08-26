@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Placeholder — deny-by-default until T-13 (cover uploads) and T-19 (avatar uploads) define
+// the real per-path rules (owner-only writes, public reads for images already served in the
+// app). See 02-ARCHITECTURE.md §3.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

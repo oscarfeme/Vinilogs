@@ -1,0 +1,21 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isPublic", "order": "ASCENDING" },
+        { "fieldPath": "displayNameLower", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "records",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "format", "order": "ASCENDING" },
+        { "fieldPath": "year", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -205,7 +205,7 @@ accessibility floor) — this section states the principles the doc implements.
 - **Covers first.** `VinylCard` renders sleeve art at a true 1:1 aspect ratio with a subtle
   edge treatment. Missing art gets a generated placeholder derived from the artist name — never
   a grey box with an icon.
-- **Grid density** adapts to screen width: 2 columns on compact, 3 on medium and up.
+- **Grid density** adapts to orientation: 3 columns portrait, 5 landscape (05-DESIGN-DIRECTION.md §5).
 - **Empty states are written, not decorated.** Each one names the next action ("Your shelf is
   empty. Add your first record.") with the action as a button.
 - **Motion is short.** Shared-element transition from shelf to record detail; nothing over
@@ -247,6 +247,73 @@ Trade-off: no owned communication channel and no engagement loop. Accepted: chat
 roughly half the original build and all of the moderation burden, in exchange for an empty
 inbox at launch against WhatsApp. Nothing in the data model, navigation graph or repository
 contracts anticipates its return.
+
+**ADR-7 — Kotlin bumped to 2.3.21 (from the originally locked 2.0.21); KSP pinned to
+2.3.0, deliberately not the newest 2.3.x.** `core:data`'s Hilt/KSP annotation
+processing failed outright once T-07 gave it real source to compile: Firebase Auth's
+SDK (pulled in via `firebase-bom`, T-04) ships binary metadata Kotlin 2.0.x's compiler
+cannot read ("Module was compiled with an incompatible version of Kotlin" — metadata
+binary version 2.3.0, expected 2.0.0). This is a hard compile blocker, not a style
+preference, and it was always latent in T-04's dependency choice — it just had nothing
+to compile against until T-07. Trade-off: touches a previously locked decision
+(`00-README.md`). Verified AGP 8.6.1 (already pinned) supports Kotlin 2.3.x before
+making the change (min required is 8.2.2) — bumped `kotlin`/`ksp` only, left AGP,
+`compileSdk`/`targetSdk`, and the Compose BOM untouched.
+
+This landed in three passes, each worth recording because the failure mode looked
+similar (a build/config-time failure surfacing only once `core:data` had real KSP work
+to do) but each had a genuinely different cause:
+
+1. Bumping `kotlin` to 2.3.21 and `ksp` to the newest available release (2.3.11 at the
+   time) fixed `core:data`'s original failure, but broke `build-logic:convention`'s own
+   compilation with the *same* "incompatible version of Kotlin" error, this time on the
+   KSP Gradle-plugin jar itself. Cause: `build-logic/convention` compiles via the
+   `kotlin-dsl` Gradle plugin, whose embedded Kotlin compiler tracks the Gradle wrapper
+   version (then 8.9), not the app's own `kotlin` catalog entry — and that embedded
+   compiler couldn't read a jar built with the newer KSP. Fix: `build-logic/convention`
+   never actually needed `compileOnly(libs.ksp.gradlePlugin)` on its own classpath —
+   `AndroidHiltConventionPlugin` only applies KSP by string plugin id
+   (`pluginManager.apply("com.google.devtools.ksp")`) and never references its Gradle
+   plugin classes. Removing that one dependency line kept the incompatible jar off
+   build-logic's classpath entirely, without touching the Gradle wrapper.
+2. With that fixed, a second, unrelated failure surfaced at KSP-apply time on the real
+   modules: `'void com.android.build.api.variant.AndroidComponentsExtension
+   .addKspConfigurations(boolean)'` — KSP 2.3.11 unconditionally calls an AGP Variant
+   API method that doesn't exist in AGP 8.6.1. Verified via KSP's own GitHub release
+   notes (not guessed): that call was added in KSP 2.3.1 specifically to support AGP
+   9.0's built-in-Kotlin mode ("Added support for AGP 9.0 and built-in Kotlin", KSP
+   2.3.1 changelog) and isn't gated behind an AGP-version check, so it breaks on any
+   older AGP even though KSP 2.3.x doesn't otherwise require AGP 9. KSP 2.3.0 (the
+   release immediately before that change) already carries this ADR's real prerequisite
+   — "KSP version is no longer tied to the Kotlin compiler version" (its own 2.3.0
+   release notes) — so it reads Kotlin 2.3.21 source fine without pulling in the AGP 9
+   dependency. Pinned `ksp = "2.3.0"` for this reason; do not bump it to a newer 2.3.x
+   patch without checking whether the target still calls `addKspConfigurations`
+   unconditionally, or until this project's AGP is actually on 9.0+.
+3. With both of those fixed, module configuration then failed with "The KSP plugin was
+   detected to be applied but its task class could not be found... Hilt Gradle Plugin is
+   using a different class loader" (google/dagger#3965). Cause, verified via Dagger's own
+   changelog rather than guessed: the pinned `hilt = "2.52"` predates KSP2 entirely —
+   dagger-2.54's release notes record "Upgrade Hilt Gradle Plugin to support KSP2
+   configuration" (fixes #4303) — so Hilt's Gradle plugin couldn't locate KSP2's task
+   classes once `ksp` moved onto the KSP2 architecture (any `ksp >= 2.3.0`, itself
+   required by this ADR's Kotlin bump). Bumped `hilt` to `2.60.1` (latest at the time).
+4. Applying `hilt = "2.60.1"` then failed at plugin-apply time with an explicit, hard
+   version check: *"The Hilt Android Gradle plugin is only compatible with Android
+   Gradle plugin (AGP) version 9.0.0 or higher (found Android Gradle Plugin version
+   8.6.1)."* Unlike passes 1–3, this isn't a metadata-reading ceiling that can be routed
+   around — it's a real minimum-version requirement, and research (google/dagger#5083,
+   #4944) suggests Hilt's KSP2 support and the AGP 9 requirement arrived together, so no
+   later Hilt release is expected to offer KSP2 support on AGP 8.x. **This is out of
+   scope for a same-day pin bump** — decided with the user to do the full cascade (AGP
+   9 + a Gradle 9.x wrapper bump) rather than revert Hilt/KSP, but to do it once real
+   Android tooling is available locally rather than continue guessing blind through
+   ~2-minute CI round-trips. See `PROGRESS.md`'s "AGP 9 / Gradle 9 migration" section
+   for the concrete next steps and the research already done for it.
+
+Third-party SDKs (Firebase, KSP, AGP, Hilt) move faster than a version pin written once
+at project start and don't always move in lockstep with each other; expect to revisit
+this again as they keep moving.
 
 ## 8. Cloud Functions (Node 20)
 
