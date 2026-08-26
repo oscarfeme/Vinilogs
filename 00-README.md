@@ -135,7 +135,7 @@ Agents must not change these without an ADR (see `02-ARCHITECTURE.md` §7).
 
 | Area | Decision |
 |---|---|
-| Language | Kotlin 2.0, JDK 17 |
+| Language | Kotlin 2.3, JDK 17 (bumped from 2.0 — ADR-7, `02-ARCHITECTURE.md` §7) |
 | UI | Jetpack Compose + Material 3 |
 | Min / target SDK | minSdk 26, targetSdk 35 |
 | Architecture | MVVM + Repository, single-activity, unidirectional data flow |

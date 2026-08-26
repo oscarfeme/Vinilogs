@@ -248,6 +248,19 @@ roughly half the original build and all of the moderation burden, in exchange fo
 inbox at launch against WhatsApp. Nothing in the data model, navigation graph or repository
 contracts anticipates its return.
 
+**ADR-7 — Kotlin bumped to 2.3.21 (from the originally locked 2.0.21).** `core:data`'s
+Hilt/KSP annotation processing failed outright once T-07 gave it real source to
+compile: Firebase Auth's SDK (pulled in via `firebase-bom`, T-04) ships binary metadata
+Kotlin 2.0.x's compiler cannot read ("Module was compiled with an incompatible version
+of Kotlin" — metadata binary version 2.3.0, expected 2.0.0). This is a hard compile
+blocker, not a style preference, and it was always latent in T-04's dependency choice —
+it just had nothing to compile against until T-07. Trade-off: touches a previously
+locked decision (`00-README.md`). Verified AGP 8.6.1 (already pinned) supports Kotlin
+2.3.x before making the change (min required is 8.2.2) — bumped `kotlin`/`ksp` only,
+left AGP, `compileSdk`/`targetSdk`, and the Compose BOM untouched. Third-party SDKs
+(Firebase here) move faster than a version pin written once at project start; expect
+to revisit this again as they keep moving.
+
 ## 8. Cloud Functions (Node 20)
 
 | Function | Trigger | Purpose |
