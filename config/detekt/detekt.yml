@@ -10,6 +10,13 @@ style:
     # spacing/shape token is a raw .dp value -- that's the entire content of a design-token
     # file, not something to name a constant for. This is the single most commonly disabled
     # detekt rule in real-world Android/Compose projects for exactly this reason.
+  UnusedParameter:
+    active: false
+    # Real signal in most codebases, but this project's own convention (T-01/03/06 all built
+    # scaffolding ahead of implementation, per 00-README.md) is stub screens that accept the
+    # full callback signature they'll need once T-09/T-15-18/T-23-25 wire in the real UI --
+    # the parameters are documentation of what's coming, not dead code. Re-enabling this once
+    # the stub era is over (all Phase-0/1 scaffolding tasks done) would be reasonable.
 
 naming:
   FunctionNaming:
