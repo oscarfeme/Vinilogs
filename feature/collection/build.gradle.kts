@@ -12,6 +12,11 @@ dependencies {
     // accessors don't resolve in the root build (Unresolved reference) — findLibrary()
     // is the same catalog, string-keyed, unaffected.
     implementation(libs.findLibrary("kotlinx-serialization-json").get())
+
+    // core:testing's Compose UI test helpers (createVinilogsComposeRule/setVinilogsContent) are
+    // only wired as testImplementation by AndroidFeatureConventionPlugin -- the androidTest
+    // source set (where actual Compose UI instrumented tests live) needs its own dependency.
+    androidTestImplementation(project(":core:testing"))
 }
 
 // Shelf, record detail, add/edit record, stats (T-15–T-18, T-26, T-27).
