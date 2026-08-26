@@ -18,6 +18,14 @@ local.properties
 .externalNativeBuild/
 .cxx/
 
+# Firebase Emulator Suite
+firebase/.runtimeconfig.json
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firebase/emulator-data/
+firebase/seed/node_modules/
+
 # IDE
 .idea/
 *.iml

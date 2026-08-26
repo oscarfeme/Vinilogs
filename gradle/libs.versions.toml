@@ -18,6 +18,10 @@ hiltNavigationCompose = "1.2.0"
 # Coroutines
 coroutines = "1.9.0"
 
+# Firebase (T-04) — Auth, Firestore, Storage per 00-README.md's locked backend decision
+googleServices = "4.5.0"
+firebaseBom = "34.18.0"
+
 # Image loading (00-README.md locked decision)
 coil = "2.7.0"
 
@@ -63,7 +67,15 @@ hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testi
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+
+# Firebase — versions resolved via the BOM. Main modules only: BoM 34.x removed the -ktx
+# artifacts and folded their Kotlin extensions into the main modules.
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
+firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+firebase-storage = { group = "com.google.firebase", name = "firebase-storage" }
 
 # Testing
 junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit5" }
@@ -89,6 +101,7 @@ kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 
 # Registered so this build-logic module can apply its own convention plugins.
 vinilogs-android-application = { id = "vinilogs.android.application" }

@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "dev": "vinilogs-dev",
+    "prod": "vinilogs-prod",
+    "default": "vinilogs-dev"
+  }
+}
