@@ -21,6 +21,9 @@ coroutines = "1.9.0"
 # Image loading (00-README.md locked decision)
 coil = "2.7.0"
 
+# kotlinx.serialization — backs Navigation Compose's type-safe routes
+kotlinxSerializationJson = "1.7.3"
+
 # Testing — locked stack per 00-README.md (JUnit5 + Turbine + MockK)
 junit5 = "5.11.3"
 turbine = "1.1.0"
@@ -47,6 +50,9 @@ androidx-compose-material-icons-core = { group = "androidx.compose.material", na
 
 # Image loading
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# Serialization
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 # DI
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
@@ -80,6 +86,7 @@ android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
