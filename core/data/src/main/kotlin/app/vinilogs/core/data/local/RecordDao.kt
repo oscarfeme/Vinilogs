@@ -104,4 +104,12 @@ interface RecordDao {
             "GROUP BY label ORDER BY count DESC, name ASC LIMIT 5",
     )
     fun observeTopLabels(): Flow<List<NameCountRow>>
+
+    /**
+     * The distinct [app.vinilogs.core.model.SyncState] values present across the whole
+     * collection (T-11) -- [RecordLocalDataSource.observeSyncState] collapses this into one
+     * aggregate `SyncState` (worst-case wins: `ERROR` > `PENDING` > `SYNCED`).
+     */
+    @Query("SELECT DISTINCT syncState FROM records")
+    fun observeDistinctSyncStates(): Flow<List<String>>
 }
