@@ -15,11 +15,12 @@ ktlint_function_naming_ignore_when_annotated_with = Composable
 ktlint_standard_multiline-expression-wrapping = disabled
 ktlint_standard_string-template-indent = disabled
 
-# Route/model data classes (RecordDetailRoute(id), EditRecordRoute(id), etc.) and composables
-# routinely take 1-3 parameters and fit comfortably on one line -- ktlint's default forces
-# multi-line wrapping starting at 2 parameters regardless of whether the line fits, which
-# would force-wrap nearly every route class and simple composable in this codebase. Raised to
-# a threshold generous enough to leave short signatures alone while still catching genuinely
-# long ones.
-ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 5
-ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 5
+# function-signature/class-signature enforce one exact canonical shape per parameter count
+# (single-line below a threshold, fully multi-line at/above it) rather than tolerating either
+# -- raising the threshold (tried first) just moved the fight from force-wrapping short route
+# classes to force-collapsing already hand-formatted, readable multi-parameter composables like
+# VinilogsNavHost's trailing-comma multi-line style. Disabled outright: this project's existing
+# style already reads fine either way, and there's no single threshold that doesn't fight
+# something.
+ktlint_standard_function-signature = disabled
+ktlint_standard_class-signature = disabled
