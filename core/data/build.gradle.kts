@@ -40,6 +40,16 @@ android {
     defaultConfig {
         buildConfigField("String", "DISCOGS_API_KEY", "\"$discogsApiKey\"")
     }
+
+    // Repository unit tests mock the Firebase SDK directly (no Robolectric, no live Firebase
+    // project -- see T-08's PR notes). Building small SDK value objects on that path (e.g.
+    // UserProfileChangeRequest.Builder) touches Android stub methods (android.text.TextUtils)
+    // that the plain android.jar throws on by default outside Robolectric. Returning defaults
+    // instead of throwing is the standard escape hatch for that, per
+    // https://developer.android.com/r/studio-ui/build/not-mocked.
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
