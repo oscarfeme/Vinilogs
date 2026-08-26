@@ -248,18 +248,51 @@ roughly half the original build and all of the moderation burden, in exchange fo
 inbox at launch against WhatsApp. Nothing in the data model, navigation graph or repository
 contracts anticipates its return.
 
-**ADR-7 — Kotlin bumped to 2.3.21 (from the originally locked 2.0.21).** `core:data`'s
-Hilt/KSP annotation processing failed outright once T-07 gave it real source to
-compile: Firebase Auth's SDK (pulled in via `firebase-bom`, T-04) ships binary metadata
-Kotlin 2.0.x's compiler cannot read ("Module was compiled with an incompatible version
-of Kotlin" — metadata binary version 2.3.0, expected 2.0.0). This is a hard compile
-blocker, not a style preference, and it was always latent in T-04's dependency choice —
-it just had nothing to compile against until T-07. Trade-off: touches a previously
-locked decision (`00-README.md`). Verified AGP 8.6.1 (already pinned) supports Kotlin
-2.3.x before making the change (min required is 8.2.2) — bumped `kotlin`/`ksp` only,
-left AGP, `compileSdk`/`targetSdk`, and the Compose BOM untouched. Third-party SDKs
-(Firebase here) move faster than a version pin written once at project start; expect
-to revisit this again as they keep moving.
+**ADR-7 — Kotlin bumped to 2.3.21 (from the originally locked 2.0.21); KSP pinned to
+2.3.0, deliberately not the newest 2.3.x.** `core:data`'s Hilt/KSP annotation
+processing failed outright once T-07 gave it real source to compile: Firebase Auth's
+SDK (pulled in via `firebase-bom`, T-04) ships binary metadata Kotlin 2.0.x's compiler
+cannot read ("Module was compiled with an incompatible version of Kotlin" — metadata
+binary version 2.3.0, expected 2.0.0). This is a hard compile blocker, not a style
+preference, and it was always latent in T-04's dependency choice — it just had nothing
+to compile against until T-07. Trade-off: touches a previously locked decision
+(`00-README.md`). Verified AGP 8.6.1 (already pinned) supports Kotlin 2.3.x before
+making the change (min required is 8.2.2) — bumped `kotlin`/`ksp` only, left AGP,
+`compileSdk`/`targetSdk`, and the Compose BOM untouched.
+
+This landed in two passes, both worth recording because the failure mode looked
+identical each time but had a different cause:
+
+1. Bumping `kotlin` to 2.3.21 and `ksp` to the newest available release (2.3.11 at the
+   time) fixed `core:data`'s original failure, but broke `build-logic:convention`'s own
+   compilation with the *same* "incompatible version of Kotlin" error, this time on the
+   KSP Gradle-plugin jar itself. Cause: `build-logic/convention` compiles via the
+   `kotlin-dsl` Gradle plugin, whose embedded Kotlin compiler tracks the Gradle wrapper
+   version (then 8.9), not the app's own `kotlin` catalog entry — and that embedded
+   compiler couldn't read a jar built with the newer KSP. Fix: `build-logic/convention`
+   never actually needed `compileOnly(libs.ksp.gradlePlugin)` on its own classpath —
+   `AndroidHiltConventionPlugin` only applies KSP by string plugin id
+   (`pluginManager.apply("com.google.devtools.ksp")`) and never references its Gradle
+   plugin classes. Removing that one dependency line kept the incompatible jar off
+   build-logic's classpath entirely, without touching the Gradle wrapper.
+2. With that fixed, a second, unrelated failure surfaced at KSP-apply time on the real
+   modules: `'void com.android.build.api.variant.AndroidComponentsExtension
+   .addKspConfigurations(boolean)'` — KSP 2.3.11 unconditionally calls an AGP Variant
+   API method that doesn't exist in AGP 8.6.1. Verified via KSP's own GitHub release
+   notes (not guessed): that call was added in KSP 2.3.1 specifically to support AGP
+   9.0's built-in-Kotlin mode ("Added support for AGP 9.0 and built-in Kotlin", KSP
+   2.3.1 changelog) and isn't gated behind an AGP-version check, so it breaks on any
+   older AGP even though KSP 2.3.x doesn't otherwise require AGP 9. KSP 2.3.0 (the
+   release immediately before that change) already carries this ADR's real prerequisite
+   — "KSP version is no longer tied to the Kotlin compiler version" (its own 2.3.0
+   release notes) — so it reads Kotlin 2.3.21 source fine without pulling in the AGP 9
+   dependency. Pinned `ksp = "2.3.0"` for this reason; do not bump it to a newer 2.3.x
+   patch without checking whether the target still calls `addKspConfigurations`
+   unconditionally, or until this project's AGP is actually on 9.0+.
+
+Third-party SDKs (Firebase, KSP, AGP) move faster than a version pin written once at
+project start and don't always move in lockstep with each other; expect to revisit this
+again as they keep moving.
 
 ## 8. Cloud Functions (Node 20)
 
