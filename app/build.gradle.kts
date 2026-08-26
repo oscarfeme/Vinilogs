@@ -38,4 +38,12 @@ dependencies {
     // Backs Navigation Compose's type-safe routes, defined across the three
     // top-level graphs this module wires together.
     implementation(libs.findLibrary("kotlinx-serialization-json").get())
+    // T-09: AuthStateViewModel (auth-state routing) and its `hiltViewModel()` call site
+    // in VinilogsNavHost.
+    implementation(libs.findLibrary("androidx-lifecycle-viewmodel-compose").get())
+    implementation(libs.findLibrary("hilt-navigation-compose").get())
+
+    // T-09: AuthStateViewModelTest exercises the auth-state routing logic against
+    // FakeAuthRepository, same as every feature module's ViewModel tests.
+    testImplementation(project(":core:testing"))
 }
