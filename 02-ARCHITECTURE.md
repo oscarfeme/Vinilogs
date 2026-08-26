@@ -298,10 +298,22 @@ to do) but each had a genuinely different cause:
    configuration" (fixes #4303) — so Hilt's Gradle plugin couldn't locate KSP2's task
    classes once `ksp` moved onto the KSP2 architecture (any `ksp >= 2.3.0`, itself
    required by this ADR's Kotlin bump). Bumped `hilt` to `2.60.1` (latest at the time).
+4. Applying `hilt = "2.60.1"` then failed at plugin-apply time with an explicit, hard
+   version check: *"The Hilt Android Gradle plugin is only compatible with Android
+   Gradle plugin (AGP) version 9.0.0 or higher (found Android Gradle Plugin version
+   8.6.1)."* Unlike passes 1–3, this isn't a metadata-reading ceiling that can be routed
+   around — it's a real minimum-version requirement, and research (google/dagger#5083,
+   #4944) suggests Hilt's KSP2 support and the AGP 9 requirement arrived together, so no
+   later Hilt release is expected to offer KSP2 support on AGP 8.x. **This is out of
+   scope for a same-day pin bump** — decided with the user to do the full cascade (AGP
+   9 + a Gradle 9.x wrapper bump) rather than revert Hilt/KSP, but to do it once real
+   Android tooling is available locally rather than continue guessing blind through
+   ~2-minute CI round-trips. See `PROGRESS.md`'s "AGP 9 / Gradle 9 migration" section
+   for the concrete next steps and the research already done for it.
 
-Third-party SDKs (Firebase, KSP, AGP) move faster than a version pin written once at
-project start and don't always move in lockstep with each other; expect to revisit this
-again as they keep moving.
+Third-party SDKs (Firebase, KSP, AGP, Hilt) move faster than a version pin written once
+at project start and don't always move in lockstep with each other; expect to revisit
+this again as they keep moving.
 
 ## 8. Cloud Functions (Node 20)
 

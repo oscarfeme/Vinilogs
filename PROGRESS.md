@@ -5,6 +5,86 @@ where things actually stand. Update it as tasks land. Superseded entries can be 
 they're no longer useful context, but don't delete the "known gotchas" material below without
 folding it into `CLAUDE.md` first.
 
+## Immediate next step: AGP 9 / Gradle 9 migration (do this before anything else)
+
+**CI is currently red on `feat/T-07-testing-fakes`** (and on the shared base branch
+`feat/T-01-repo-scaffold`) for a known, understood reason — read this before running
+step 2 of the checklist below, since it will fail as-is.
+
+**What happened**: `02-ARCHITECTURE.md`'s ADR-7 (Kotlin 2.0.21 → 2.3.21, forced by a
+Firebase Auth metadata incompatibility — read the full ADR before touching any of these
+pins again) cascaded through four passes of dependent version fixes — build-logic
+classpath, a KSP pin, a Hilt bump — and the fourth pass hit a hard wall: **Hilt
+2.60.1's Gradle plugin refuses to apply on anything below AGP 9.0.0**
+(`"The Hilt Android Gradle plugin is only compatible with Android Gradle plugin (AGP)
+version 9.0.0 or higher (found Android Gradle Plugin version 8.6.1)"`), and this
+project is pinned to AGP 8.6.1. Research (google/dagger#5083, #4944) suggests Hilt's
+KSP2 support and the AGP 9 requirement shipped together — no older Hilt release is
+expected to give KSP2 support on AGP 8.x.
+
+**Decision (made with the user 2026-08-26, once real Android tooling was installed on
+this machine)**: do the full cascade — bump AGP to 9.0+ and the Gradle wrapper to
+9.x — rather than revert the Kotlin/KSP/Hilt bumps. Do it locally, now that real
+tooling exists, instead of continuing to iterate blind through ~2-minute CI-only
+round-trips (which is how passes 1–4 above were done, in a sandbox with no JDK/SDK).
+
+**Research already done, so the next session doesn't have to redo it** (all verified
+via WebFetch of `developer.android.com/build/releases/agp-9-0-0-release-notes` and
+KSP/Dagger GitHub release notes, not guessed):
+
+- Target **AGP 9.0.1** (latest as of this writing, Jan 2026) — needs **Gradle 9.1.0**
+  minimum/default (not just "any Gradle 9.x"). SDK Build Tools minimum 36.0.0. JDK
+  minimum 17 (already satisfied).
+- **`android.builtInKotlin` defaults to `true` in AGP 9.0** and is incompatible with
+  KSP (KSP requires the classic `org.jetbrains.kotlin.android` plugin) — this project
+  uses KSP for Hilt annotation processing, so **set `android.builtInKotlin=false`
+  explicitly in `gradle.properties`** as part of this migration, or every KSP-consuming
+  module breaks in a new way. Don't skip this — it's not optional given this project's
+  architecture.
+- **`targetSdk` is removed from the library variant DSL entirely in AGP 9** (not just
+  deprecated — this project already has the deprecation warning surfacing in CI logs:
+  `AndroidLibraryConventionPlugin.kt:18:21 'targetSdk: Int?' is deprecated`). Fix this
+  as part of the same change — move it to `testOptions.targetSdk`/`lint.targetSdk` per
+  the warning text, or drop it if it's not actually needed there.
+- AGP 9 also removes legacy `BaseExtension`/variant APIs (e.g. `applicationVariants`)
+  in favor of the `androidComponents`/`androidComponents.onVariants` API — grep
+  `build-logic/convention/src/main/kotlin/*.kt` for any such legacy usage before
+  assuming this migration is DSL-pin-only.
+- Once AGP is actually on 9.0+, `ksp` can likely go back to the newest 2.3.x (the
+  `2.3.0` pin from ADR-7 pass 2 was specifically to avoid an AGP-9-only API call that
+  now legitimately exists) — not required, but worth revisiting as cleanup.
+- There's a temporary escape hatch, `android.newDsl=false` in `gradle.properties`, if
+  the new-DSL-only requirement proves too disruptive to land in one pass — but it's
+  documented as removed in AGP 10 (mid-2026), so treat it as a bridge, not a fix.
+
+**How to execute, now that real tooling exists on this machine**:
+1. Confirm tooling is actually on `PATH` after the restart: `java -version`,
+   `./gradlew --version` (this session's shell couldn't see the newly-installed JDK/SDK
+   yet — that's expected, it needs the restart the user is about to do).
+2. Work on `feat/T-01-repo-scaffold` (the shared base branch all these version pins
+   live on) — bump `agp` in `gradle/libs.versions.toml`, the Gradle wrapper in
+   `gradle/wrapper/gradle-wrapper.properties`, add `android.builtInKotlin=false` to
+   `gradle.properties`, fix the `targetSdk` library-DSL usage.
+3. Iterate locally with `./gradlew build` — fast feedback now, unlike the CI-only loop
+   used for passes 1–4. Fix whatever AGP 9's new-DSL-only requirement surfaces.
+4. Only once a local build is green: push, merge into `feat/T-07-testing-fakes`
+   (currently at `62e09cc`; base branch is at `3710963`, both already on `origin`), and
+   re-dispatch CI (`gh workflow run CI --ref feat/T-07-testing-fakes`) to confirm all 4
+   jobs pass before considering T-07 (PR #11) done.
+5. Record the outcome as a continuation of ADR-7 in `02-ARCHITECTURE.md` (pass 5),
+   same pattern as passes 1–4 — what broke, what fixed it, why.
+
+One session-sandbox oddity, probably irrelevant on a real machine but worth knowing if
+it recurs: mid-session, `git checkout <branch>` in this repo's primary working
+directory started failing with `fatal: unable to update HEAD` / `Permission denied` on
+`.git/config`, even for a no-op re-set to the branch already checked out — while
+ordinary working-tree writes, commits, and pushes all worked fine. Worked around by
+doing the branch-specific edits in a separate `git worktree` instead of switching HEAD
+in place. No data was lost (each incident was caught and recovered with
+`git reset --hard HEAD` before anything was pushed), but if a fresh session hits the
+same "unable to update HEAD" error, don't fight it — reach for `git worktree add
+<path> <branch>` instead of `git checkout <branch>`.
+
 ## First things to do on a machine with real tooling
 
 Everything in this repo up to 2026-08-26 was built and verified entirely through GitHub
