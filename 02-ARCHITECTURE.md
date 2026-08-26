@@ -260,8 +260,9 @@ to compile against until T-07. Trade-off: touches a previously locked decision
 making the change (min required is 8.2.2) — bumped `kotlin`/`ksp` only, left AGP,
 `compileSdk`/`targetSdk`, and the Compose BOM untouched.
 
-This landed in two passes, both worth recording because the failure mode looked
-identical each time but had a different cause:
+This landed in three passes, each worth recording because the failure mode looked
+similar (a build/config-time failure surfacing only once `core:data` had real KSP work
+to do) but each had a genuinely different cause:
 
 1. Bumping `kotlin` to 2.3.21 and `ksp` to the newest available release (2.3.11 at the
    time) fixed `core:data`'s original failure, but broke `build-logic:convention`'s own
@@ -289,6 +290,14 @@ identical each time but had a different cause:
    dependency. Pinned `ksp = "2.3.0"` for this reason; do not bump it to a newer 2.3.x
    patch without checking whether the target still calls `addKspConfigurations`
    unconditionally, or until this project's AGP is actually on 9.0+.
+3. With both of those fixed, module configuration then failed with "The KSP plugin was
+   detected to be applied but its task class could not be found... Hilt Gradle Plugin is
+   using a different class loader" (google/dagger#3965). Cause, verified via Dagger's own
+   changelog rather than guessed: the pinned `hilt = "2.52"` predates KSP2 entirely —
+   dagger-2.54's release notes record "Upgrade Hilt Gradle Plugin to support KSP2
+   configuration" (fixes #4303) — so Hilt's Gradle plugin couldn't locate KSP2's task
+   classes once `ksp` moved onto the KSP2 architecture (any `ksp >= 2.3.0`, itself
+   required by this ADR's Kotlin bump). Bumped `hilt` to `2.60.1` (latest at the time).
 
 Third-party SDKs (Firebase, KSP, AGP) move faster than a version pin written once at
 project start and don't always move in lockstep with each other; expect to revisit this
