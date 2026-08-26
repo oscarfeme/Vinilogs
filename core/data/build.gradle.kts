@@ -6,9 +6,18 @@ plugins {
 android {
     namespace = "app.vinilogs.core.data"
 
-    // Robolectric (RecordDaoTest, T-10) needs the merged manifest/resources on its classpath.
     testOptions {
+        // Robolectric (RecordLocalDataSourceTest, T-10) needs the merged manifest/resources on
+        // its classpath.
         unitTests.isIncludeAndroidResources = true
+        // Repository unit tests that mock the Firebase SDK directly (T-08, no Robolectric, no
+        // live Firebase project) hit a separate issue: building small SDK value objects on that
+        // path (e.g. UserProfileChangeRequest.Builder) touches Android stub methods
+        // (android.text.TextUtils) that the plain android.jar throws on by default outside
+        // Robolectric. Returning defaults instead of throwing is the standard escape hatch for
+        // that, per https://developer.android.com/r/studio-ui/build/not-mocked -- both settings
+        // are needed side by side since this module now has tests exercising each path.
+        unitTests.isReturnDefaultValues = true
     }
 }
 
