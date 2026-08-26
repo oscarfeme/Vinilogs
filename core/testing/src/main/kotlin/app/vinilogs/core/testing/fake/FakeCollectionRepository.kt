@@ -93,10 +93,19 @@ class FakeCollectionRepository(
 }
 
 private fun Record.matches(filter: CollectionFilter): Boolean {
+    // Kotlin can't smart-cast a public property declared in a different module
+    // (year/rating are core:model's; decade/minRating are CollectionFilter's,
+    // also core:model) -- capture into locals first so the null checks below
+    // actually narrow the type.
+    val year = year
+    val rating = rating
+    val decade = filter.decade
+    val minRating = filter.minRating
+
     if (filter.format != null && format != filter.format) return false
     if (filter.condition != null && condition != filter.condition) return false
-    if (filter.decade != null && (year == null || (year / 10) * 10 != filter.decade)) return false
-    if (filter.minRating != null && (rating == null || rating < filter.minRating)) return false
+    if (decade != null && (year == null || (year / 10) * 10 != decade)) return false
+    if (minRating != null && (rating == null || rating < minRating)) return false
     if (filter.tag != null && filter.tag !in tags) return false
     return true
 }

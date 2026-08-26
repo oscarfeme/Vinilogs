@@ -3,11 +3,11 @@ package app.vinilogs.core.testing.fake
 import app.cash.turbine.test
 import app.vinilogs.core.model.ProfileUpdate
 import app.vinilogs.core.model.UserProfile
-import java.time.Instant
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.Instant
 
 class FakeUserRepositoryTest {
     private fun profile(uid: String, displayName: String, isPublic: Boolean = true) = UserProfile(
