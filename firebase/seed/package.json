@@ -1,0 +1,11 @@
+{
+  "name": "vinilogs-emulator-seed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.2.0"
+  }
+}
