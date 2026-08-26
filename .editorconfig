@@ -1,0 +1,16 @@
+root = true
+
+[*.{kt,kts}]
+# @Composable functions are conventionally PascalCase (they read as components, like
+# MaterialTheme itself) -- ktlint's default function-naming rule doesn't know this exception.
+ktlint_function_naming_ignore_when_annotated_with = Composable
+
+# Conflicts with the idiomatic Modifier-chaining style used throughout core:designsystem
+# (modifier = modifier.fillMaxSize().padding(...)) -- this rule wants the chain's first line
+# pushed onto its own line after '=', which every real-world Compose codebase using this style
+# disables. string-template-indent is disabled alongside it: ktlint >=1.0 requires
+# multiline-expression-wrapping to be loaded for string-template-indent to run, so disabling
+# one without the other throws IllegalStateException (pinterest/ktlint#2288). This project
+# doesn't use multi-line string templates, so losing that rule costs nothing.
+ktlint_standard_multiline-expression-wrapping = disabled
+ktlint_standard_string-template-indent = disabled
