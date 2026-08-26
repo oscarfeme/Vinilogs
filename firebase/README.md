@@ -68,9 +68,14 @@ this seed only writes the owner-side `records`, matching what's actually impleme
 
 - **Cloud Functions** (`onRecordWritten`, `onProfileUpdated`, `onAccountDeleted`) — T-20. A
   `functions/` directory and the `functions` block in `firebase.json` land with that task.
-- **Real security rules** — `firestore.rules` and `storage.rules` here are deny-by-default
-  placeholders. T-14 (Firestore) and T-13/T-19 (Storage, implicitly) replace them, with rules
-  unit tests. Do not loosen either file without a test proving it can't leak a private field.
+- **Storage security rules** — `storage.rules` is still a deny-by-default placeholder; T-13
+  (cover uploads) and T-19 (avatar uploads) replace it. `firestore.rules` got its real rules
+  in T-14 (see `tests/firestore.rules.test.js` for the unit test suite — run with `npm test`
+  from this directory, which drives `firebase emulators:exec` via the devDependencies in
+  `package.json`, no global `firebase-tools` install needed). Do not loosen either file
+  without a test proving it can't leak a private field. T-21 (Phase 2) still owes rules for
+  `users/{uid}/publicRecords` and `reports/{reportId}` — both are deny-by-default in
+  `firestore.rules` until then.
 - **Composite indexes** in `firestore.indexes.json` cover the compound queries named in
   `02-ARCHITECTURE.md` §3 (`(isPublic, displayNameLower)` and `(format, year)`). The
   single-field ones listed there (`rating`, `createdAt`, `artistLower`) aren't included —
