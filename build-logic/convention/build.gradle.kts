@@ -27,7 +27,13 @@ dependencies {
     // kotlin-dsl's Gradle-embedded Kotlin compiler (capped well below the app's own Kotlin
     // pin — see ADR-7), which can't read newer KSP releases' binary metadata; keeping the jar
     // off this classpath sidesteps that instead of chasing a Gradle wrapper bump.
-    compileOnly(libs.hilt.gradlePlugin)
+    //
+    // No compileOnly(libs.hilt.gradlePlugin) either, and for the identical reason:
+    // AndroidHiltConventionPlugin only applies Hilt by string id
+    // (pluginManager.apply("com.google.dagger.hilt.android")), never its Gradle plugin
+    // classes. hilt-android-gradle-plugin's jar (and its transitive newer kotlin-stdlib) hit
+    // the exact same "incompatible version of Kotlin" wall build-logic's own compiler can't
+    // read — see ADR-7's third pass.
 }
 
 // Registers each convention plugin under a `vinilogs.*` id so module
