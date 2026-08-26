@@ -4,6 +4,10 @@ agp = "8.6.1"
 kotlin = "2.0.21"
 ksp = "2.0.21-1.0.28"
 
+# Static analysis (T-05 CI)
+ktlint = "14.2.0"
+detekt = "1.23.8"
+
 # AndroidX
 coreKtx = "1.13.1"
 lifecycle = "2.8.6"
@@ -101,6 +105,8 @@ kotlin-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 
 # Registered so this build-logic module can apply its own convention plugins.

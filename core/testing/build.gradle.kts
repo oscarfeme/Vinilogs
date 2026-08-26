@@ -14,7 +14,7 @@ dependencies {
     // is to be consumed as test infrastructure by other modules' test source
     // sets (fake repositories, coroutine test rule, Compose test helpers — T-07).
     // Type-safe libs.<dotted> library accessors don't resolve in the root build (Unresolved
-    // reference) — see the fix commit on this branch. findLibrary() is the same catalog,
+    // reference) — findLibrary() is the same catalog,
     // string-keyed, unaffected.
     api(libs.findLibrary("junit-jupiter-api").get())
     api(libs.findLibrary("kotlinx-coroutines-test").get())
