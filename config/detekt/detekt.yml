@@ -17,6 +17,13 @@ style:
     # full callback signature they'll need once T-09/T-15-18/T-23-25 wire in the real UI --
     # the parameters are documentation of what's coming, not dead code. Re-enabling this once
     # the stub era is over (all Phase-0/1 scaffolding tasks done) would be reasonable.
+  ReturnCount:
+    active: true
+    excludes: ["**/core/testing/**"]
+    # Fake-repository predicate helpers (e.g. Record.matches(filter)) read as a sequence of
+    # early-return guard clauses -- one per filter field -- which is more readable here than
+    # collapsing into a single boolean expression. Scoped to core:testing for the same reason
+    # as TooManyFunctions below.
 
 naming:
   FunctionNaming:
@@ -35,3 +42,11 @@ complexity:
     # modifiers, multiple optional callbacks) -- most of ErrorState's 6 parameters have
     # defaults; ignoreDefaultParameters keeps this rule meaningful instead of just raising
     # the threshold everywhere.
+  TooManyFunctions:
+    active: true
+    excludes: ["**/core/testing/**"]
+    # A fake repository in core:testing (T-07) has to implement every method of the real
+    # repository interface it stands in for (10 for CollectionRepository alone) plus a few
+    # test-only control methods (failNextCallWith, setSyncState, ...) -- that's the fake's
+    # whole job, not a class doing too much. Scoped to core:testing so production code
+    # elsewhere still gets the real signal.
