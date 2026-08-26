@@ -14,3 +14,12 @@ ktlint_function_naming_ignore_when_annotated_with = Composable
 # doesn't use multi-line string templates, so losing that rule costs nothing.
 ktlint_standard_multiline-expression-wrapping = disabled
 ktlint_standard_string-template-indent = disabled
+
+# Route/model data classes (RecordDetailRoute(id), EditRecordRoute(id), etc.) and composables
+# routinely take 1-3 parameters and fit comfortably on one line -- ktlint's default forces
+# multi-line wrapping starting at 2 parameters regardless of whether the line fits, which
+# would force-wrap nearly every route class and simple composable in this codebase. Raised to
+# a threshold generous enough to leave short signatures alone while still catching genuinely
+# long ones.
+ktlint_function_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 5
+ktlint_class_signature_rule_force_multiline_when_parameter_count_greater_or_equal_than = 5
