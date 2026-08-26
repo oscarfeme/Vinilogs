@@ -9,11 +9,11 @@ import app.vinilogs.core.model.CollectionStats
 import app.vinilogs.core.model.NameCount
 import app.vinilogs.core.model.Record
 import app.vinilogs.core.model.SyncState
-import java.util.UUID
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import java.util.UUID
 
 /**
  * In-memory [CollectionRepository] fake, seeded from [initialRecords] (typically
@@ -113,12 +113,18 @@ private fun Collection<Record>.toStats(): CollectionStats {
     val byDecade = filter { it.year != null }
         .groupingBy { (it.year!! / 10) * 10 }
         .eachCount()
-    val topArtists = groupingBy { it.artist }.eachCount()
-        .entries.sortedByDescending { it.value }.take(5)
+    val topArtists = groupingBy { it.artist }
+        .eachCount()
+        .entries
+        .sortedByDescending { it.value }
+        .take(5)
         .map { NameCount(it.key, it.value) }
     val topLabels = filter { it.label != null }
-        .groupingBy { it.label!! }.eachCount()
-        .entries.sortedByDescending { it.value }.take(5)
+        .groupingBy { it.label!! }
+        .eachCount()
+        .entries
+        .sortedByDescending { it.value }
+        .take(5)
         .map { NameCount(it.key, it.value) }
     return CollectionStats(
         totalRecords = size,

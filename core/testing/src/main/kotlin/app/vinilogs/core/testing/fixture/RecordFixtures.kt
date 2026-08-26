@@ -14,14 +14,38 @@ import kotlin.random.Random
  */
 object RecordFixtures {
     private val artists = listOf(
-        "Miles Davis", "John Coltrane", "Fleetwood Mac", "Stevie Wonder", "Radiohead",
-        "Pink Floyd", "The Beatles", "David Bowie", "Joni Mitchell", "Nina Simone",
-        "Herbie Hancock", "Talking Heads", "Kraftwerk", "Aretha Franklin", "Bill Evans",
-        "The Velvet Underground", "Brian Eno", "Alice Coltrane", "Sade", "Portishead",
+        "Miles Davis",
+        "John Coltrane",
+        "Fleetwood Mac",
+        "Stevie Wonder",
+        "Radiohead",
+        "Pink Floyd",
+        "The Beatles",
+        "David Bowie",
+        "Joni Mitchell",
+        "Nina Simone",
+        "Herbie Hancock",
+        "Talking Heads",
+        "Kraftwerk",
+        "Aretha Franklin",
+        "Bill Evans",
+        "The Velvet Underground",
+        "Brian Eno",
+        "Alice Coltrane",
+        "Sade",
+        "Portishead",
     )
     private val labels = listOf(
-        "Blue Note", "Columbia", "Atlantic", "Warner Bros.", "EMI",
-        "Impulse!", "Motown", "4AD", "ECM", "Verve",
+        "Blue Note",
+        "Columbia",
+        "Atlantic",
+        "Warner Bros.",
+        "EMI",
+        "Impulse!",
+        "Motown",
+        "4AD",
+        "ECM",
+        "Verve",
     )
     private val tagPool = listOf("jazz", "soul", "rock", "electronic", "favorite", "sealed", "reissue", "gift")
 
