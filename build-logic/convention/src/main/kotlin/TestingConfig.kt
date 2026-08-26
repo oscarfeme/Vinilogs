@@ -15,6 +15,10 @@ internal fun Project.configureTesting() {
         add("testImplementation", libs.findLibrary("junit-jupiter-api").get())
         add("testImplementation", libs.findLibrary("junit-jupiter-params").get())
         add("testRuntimeOnly", libs.findLibrary("junit-jupiter-engine").get())
+        // Gradle 9 stopped auto-resolving the JUnit Platform launcher onto the test runtime
+        // classpath (it used to be pulled in transitively) -- without this, useJUnitPlatform()
+        // fails at test-execution time with "Failed to load JUnit Platform".
+        add("testRuntimeOnly", libs.findLibrary("junit-platform-launcher").get())
         add("testImplementation", libs.findLibrary("kotlinx-coroutines-test").get())
         add("testImplementation", libs.findLibrary("turbine").get())
         add("testImplementation", libs.findLibrary("mockk").get())

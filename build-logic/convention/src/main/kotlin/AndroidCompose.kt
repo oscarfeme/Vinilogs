@@ -8,15 +8,15 @@ import org.gradle.kotlin.dsl.dependencies
  * the BOM-managed UI dependencies, and buildFeatures.compose.
  */
 internal fun Project.configureAndroidCompose(
-    commonExtension: CommonExtension<*, *, *, *, *, *>,
+    commonExtension: CommonExtension,
 ) {
     pluginManager.apply(libs.findPlugin("kotlin-compose-compiler").get().get().pluginId)
 
-    commonExtension.apply {
-        buildFeatures {
-            compose = true
-        }
-    }
+    // AGP 9's CommonExtension is no longer generic, and the lambda-taking
+    // `buildFeatures { }` DSL builder only exists on the leaf extension types
+    // (ApplicationExtension/LibraryExtension) since each has its own
+    // BuildFeatures subtype — mutate the shared base property directly instead.
+    commonExtension.buildFeatures.compose = true
 
     dependencies {
         val bom = libs.findLibrary("androidx-compose-bom").get()
