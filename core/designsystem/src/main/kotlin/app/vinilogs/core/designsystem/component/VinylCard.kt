@@ -23,6 +23,7 @@ import coil.compose.SubcomposeAsyncImageContent
  *
  * @param coverUrl null or blank falls straight through to [CoverPlaceholder],
  *   same as a Coil load failure.
+ * @param catalogNumber shown by [CoverPlaceholder] when there is no cover art.
  */
 @Composable
 fun VinylCard(
@@ -30,6 +31,7 @@ fun VinylCard(
     artist: String,
     title: String,
     modifier: Modifier = Modifier,
+    catalogNumber: String? = null,
     onClick: (() -> Unit)? = null,
 ) {
     Surface(
@@ -41,15 +43,19 @@ fun VinylCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         if (coverUrl.isNullOrBlank()) {
-            CoverPlaceholder(artist = artist, modifier = Modifier.fillMaxSize())
+            CoverPlaceholder(catalogNumber = catalogNumber, modifier = Modifier.fillMaxSize())
         } else {
             SubcomposeAsyncImage(
                 model = coverUrl,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize(),
-                loading = { CoverPlaceholder(artist = artist, modifier = Modifier.fillMaxSize()) },
-                error = { CoverPlaceholder(artist = artist, modifier = Modifier.fillMaxSize()) },
+                loading = {
+                    CoverPlaceholder(catalogNumber = catalogNumber, modifier = Modifier.fillMaxSize())
+                },
+                error = {
+                    CoverPlaceholder(catalogNumber = catalogNumber, modifier = Modifier.fillMaxSize())
+                },
                 success = { SubcomposeAsyncImageContent() },
             )
         }

@@ -203,7 +203,7 @@ is built once, in T-02, before any feature screen.
 - **Covers first.** `VinylCard` renders sleeve art at a true 1:1 aspect ratio with a subtle
   edge treatment. Missing art gets a generated placeholder derived from the artist name — never
   a grey box with an icon.
-- **Grid density** adapts to screen width: 2 columns on compact, 3 on medium and up.
+- **Grid density** adapts to orientation: 3 columns portrait, 5 landscape (05-DESIGN-DIRECTION.md §5).
 - **Empty states are written, not decorated.** Each one names the next action ("Your shelf is
   empty. Add your first record.") with the action as a button.
 - **Motion is short.** Shared-element transition from shelf to record detail; nothing over
