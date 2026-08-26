@@ -111,8 +111,7 @@ private fun VinilogsBottomBar(
 }
 
 /** True while the current destination is anywhere inside tab graph [route], not only at its root. */
-private fun NavDestination?.isInTab(route: KClass<*>): Boolean =
-    this?.hierarchy?.any { it.hasRoute(route) } == true
+private fun NavDestination?.isInTab(route: KClass<*>): Boolean = this?.hierarchy?.any { it.hasRoute(route) } == true
 
 /** Standard bottom-nav switch: preserves each tab's own back stack. */
 private fun NavHostController.navigateToTab(route: Any) {
