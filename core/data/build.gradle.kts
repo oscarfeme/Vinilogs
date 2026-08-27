@@ -1,10 +1,45 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.vinilogs.android.library)
     alias(libs.plugins.vinilogs.android.hilt)
+    // Needed for the @Serializable Discogs DTOs (T-12) -- the runtime dependency alone isn't
+    // enough, kotlinx.serialization also needs its compiler plugin applied to this module.
+    alias(libs.plugins.kotlin.serialization)
+}
+
+// API keys via local.properties -> BuildConfig, never hardcoded (00-README.md rule 5). Read
+// here rather than relying on Gradle's own local.properties auto-loading (that only covers
+// sdk.dir) -- missing key falls back to an empty string so a fresh checkout without one still
+// builds; DiscogsCatalogClient treats a blank key as a graceful, typed failure at call time,
+// not a crash.
+val localProperties =
+    Properties().apply {
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localPropertiesFile.inputStream().use { load(it) }
+        }
+    }
+val discogsApiKey: String = localProperties.getProperty("discogs.apiKey", "")
+if (discogsApiKey.isBlank()) {
+    logger.warn(
+        "core:data: local.properties has no 'discogs.apiKey' entry -- Discogs catalogue " +
+            "search will return DiscogsFailure.MissingApiKey at runtime until one is added.",
+    )
 }
 
 android {
     namespace = "app.vinilogs.core.data"
+
+    // Library modules don't enable buildConfig by default (only `app` conventionally does) --
+    // needed here so DiscogsCatalogClient can read the API key without hardcoding it (T-12).
+    buildFeatures {
+        buildConfig = true
+    }
+
+    defaultConfig {
+        buildConfigField("String", "DISCOGS_API_KEY", "\"$discogsApiKey\"")
+    }
 
     testOptions {
         // Robolectric (RecordLocalDataSourceTest, T-10) needs the merged manifest/resources on
@@ -38,6 +73,14 @@ dependencies {
     implementation(libs.findLibrary("firebase-storage").get())
     implementation(libs.findLibrary("kotlinx-coroutines-play-services").get())
 
+    // Discogs client (T-12) — Retrofit + OkHttp + kotlinx.serialization converter (this
+    // project's locked JSON library, not Moshi/Gson).
+    implementation(libs.findLibrary("kotlinx-serialization-json").get())
+    implementation(libs.findLibrary("retrofit-core").get())
+    implementation(libs.findLibrary("retrofit-kotlinx-serialization-converter").get())
+    implementation(libs.findLibrary("okhttp").get())
+    testImplementation(libs.findLibrary("okhttp-mockwebserver").get())
+
     // Room (T-10) — local persistence, source of truth for the user's own collection (ADR-2).
     // room-compiler is a KSP annotation processor, not a regular dependency; the `vinilogs.
     // android.hilt` convention plugin (applied above) already applies the KSP Gradle plugin.
@@ -55,6 +98,3 @@ dependencies {
     testImplementation(libs.findLibrary("junit4").get())
     testImplementation(libs.findLibrary("junit-vintage-engine").get())
 }
-
-// Retrofit (Discogs) data source is added by the task that implements it (T-12) rather than
-// pinned here, since its exact config isn't specified in the locked docs.
