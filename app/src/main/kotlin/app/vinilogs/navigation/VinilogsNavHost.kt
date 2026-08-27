@@ -1,5 +1,6 @@
 package app.vinilogs.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -11,8 +12,12 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -22,6 +27,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import app.vinilogs.core.designsystem.component.LoadingState
 import app.vinilogs.feature.auth.navigation.AuthGraphRoute
 import app.vinilogs.feature.auth.navigation.ProfileGraphRoute
 import app.vinilogs.feature.auth.navigation.authGraph
@@ -36,19 +42,62 @@ import kotlin.reflect.KClass
  * The single-activity nav host: signed-out ([AuthGraphRoute]) and signed-in
  * ([MainGraphRoute], three bottom-bar tabs) as the two top-level graphs.
  *
- * The signed-out/signed-in choice is hardcoded to [AuthGraphRoute] for now —
- * T-09 replaces this with real auth-state routing (00-README.md T-09).
+ * The signed-out/signed-in choice is driven by [AuthStateViewModel], which
+ * wraps `AuthRepository.currentUser` (T-09, 02-ARCHITECTURE.md §5). Nothing is
+ * shown until the first value arrives, so the graph is never mounted with a
+ * guess that then has to be corrected.
  */
 @Composable
 fun VinilogsNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
+    authStateViewModel: AuthStateViewModel = hiltViewModel(),
+) {
+    val authState by authStateViewModel.authState.collectAsState()
+
+    when (authState) {
+        AuthState.Loading -> LoadingState(modifier = modifier.fillMaxSize())
+        AuthState.SignedOut, AuthState.SignedIn -> {
+            // `remember`ed so a later SignedIn <-> SignedOut flip (e.g. sign-out,
+            // handled below) never changes NavHost's startDestination -- Compose
+            // Navigation only honours that on first composition.
+            val initialStartDestination = remember {
+                if (authState == AuthState.SignedIn) MainGraphRoute else AuthGraphRoute
+            }
+            VinilogsMainNavHost(
+                startDestination = initialStartDestination,
+                authState = authState,
+                modifier = modifier,
+                navController = navController,
+            )
+        }
+    }
+}
+
+@Composable
+private fun VinilogsMainNavHost(
+    startDestination: Any,
+    authState: AuthState,
+    modifier: Modifier,
+    navController: NavHostController,
 ) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val showBottomBar = currentDestination.isInTab(ShelfGraphRoute::class) ||
         currentDestination.isInTab(DiscoverGraphRoute::class) ||
         currentDestination.isInTab(ProfileGraphRoute::class)
+
+    // Reacts to a sign-out that happens once the main graph is already showing
+    // (FR-A2). There is no sign-out UI yet (T-19), but wiring this now means
+    // the moment one calls `AuthRepository.signOut()`, routing back to the
+    // auth graph is already correct with no further nav-host changes needed.
+    LaunchedEffect(authState) {
+        if (authState == AuthState.SignedOut && currentDestination.isInTab(MainGraphRoute::class)) {
+            navController.navigate(AuthGraphRoute) {
+                popUpTo(MainGraphRoute) { inclusive = true }
+            }
+        }
+    }
 
     Scaffold(
         modifier = modifier,
@@ -63,7 +112,7 @@ fun VinilogsNavHost(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = AuthGraphRoute,
+            startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
         ) {
             authGraph(
