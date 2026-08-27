@@ -5,6 +5,7 @@ import app.vinilogs.core.model.CollectionSort
 import app.vinilogs.core.model.CollectionStats
 import app.vinilogs.core.model.NameCount
 import app.vinilogs.core.model.Record
+import app.vinilogs.core.model.SyncState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -37,6 +38,19 @@ class RecordLocalDataSource
                 ).map { entities -> entities.map { it.toDomain() } }
 
         fun observeRecord(id: String): Flow<Record?> = dao.observeById(id).map { it?.toDomain() }
+
+        /**
+         * Collection-wide sync status (FR-B11): `ERROR` if any record has one, else `PENDING`
+         * if any record is still queued, else `SYNCED` (also the empty-collection default).
+         */
+        fun observeSyncState(): Flow<SyncState> =
+            dao.observeDistinctSyncStates().map { states ->
+                when {
+                    states.contains(SyncState.ERROR.name) -> SyncState.ERROR
+                    states.contains(SyncState.PENDING.name) -> SyncState.PENDING
+                    else -> SyncState.SYNCED
+                }
+            }
 
         /** Aggregate stats for FR-B10, computed in SQL and combined here -- see each `RecordDao.observe*` query. */
         fun observeStats(): Flow<CollectionStats> =

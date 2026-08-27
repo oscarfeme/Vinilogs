@@ -1,7 +1,9 @@
 package app.vinilogs.core.data.di
 
 import app.vinilogs.core.data.repository.AuthRepository
+import app.vinilogs.core.data.repository.CollectionRepository
 import app.vinilogs.core.data.repository.FirebaseAuthRepository
+import app.vinilogs.core.data.repository.RoomCollectionRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -15,4 +17,8 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindCollectionRepository(impl: RoomCollectionRepository): CollectionRepository
 }
