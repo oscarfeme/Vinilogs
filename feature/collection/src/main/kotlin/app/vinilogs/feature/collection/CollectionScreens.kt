@@ -3,19 +3,10 @@ package app.vinilogs.feature.collection
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-// Stub bodies only — real implementations land in T-15 (Shelf), T-16/T-17
-// (AddRecord), T-18 (RecordDetail/EditRecord), T-26 (Stats). Signatures are
-// the contract this task fixes.
-
-@Composable
-fun ShelfScreen(
-    onRecordClick: (recordId: String) -> Unit,
-    onAddRecordClick: () -> Unit,
-    onStatsClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StubScreen("Shelf", modifier)
-}
+// Stub bodies only — real implementations land in T-16/T-17 (AddRecord),
+// T-18 (RecordDetail/EditRecord), T-26 (Stats). Signatures are the contract
+// this task fixes. ShelfScreen's real implementation (T-15) lives in
+// app.vinilogs.feature.collection.shelf.ShelfScreen.
 
 @Composable
 fun RecordDetailScreen(
