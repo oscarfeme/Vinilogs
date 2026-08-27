@@ -44,9 +44,16 @@ complexity:
     # the threshold everywhere.
   TooManyFunctions:
     active: true
-    excludes: ["**/core/testing/**"]
+    excludes: ["**/core/testing/**", "**/src/test/**", "**/src/androidTest/**"]
     # A fake repository in core:testing (T-07) has to implement every method of the real
     # repository interface it stands in for (10 for CollectionRepository alone) plus a few
     # test-only control methods (failNextCallWith, setSyncState, ...) -- that's the fake's
-    # whole job, not a class doing too much. Scoped to core:testing so production code
-    # elsewhere still gets the real signal.
+    # whole job, not a class doing too much.
+    #
+    # Test source sets (T-10) hit the same false positive from the opposite direction: a
+    # thorough test class for a non-trivial unit legitimately has one `@Test` method per
+    # behaviour (RecordDao's SQL alone has ~15 independently-worth-asserting cases --
+    # filter x5, sort x4, search, stats, plus CRUD), and splitting that into fewer, multi-
+    # assertion tests to dodge a function-count threshold makes failures harder to diagnose,
+    # not easier -- the opposite of what this rule is for. Production code elsewhere still
+    # gets the real signal.
