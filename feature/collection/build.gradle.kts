@@ -22,6 +22,9 @@ dependencies {
     // the T-15 PR as a candidate to hoist up once another track needs the same icons.
     implementation(libs.findLibrary("androidx-compose-material-icons-extended").get())
 
+    // core:testing's Compose UI test helpers (createVinilogsComposeRule/setVinilogsContent) are
+    // only wired as testImplementation by AndroidFeatureConventionPlugin -- the androidTest
+    // source set (where actual Compose UI instrumented tests live) needs its own dependency.
     androidTestImplementation(project(":core:testing"))
 }
 

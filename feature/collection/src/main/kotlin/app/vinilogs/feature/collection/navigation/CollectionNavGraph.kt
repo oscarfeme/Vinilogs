@@ -5,10 +5,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
 import androidx.navigation.toRoute
-import app.vinilogs.feature.collection.AddRecordScreen
-import app.vinilogs.feature.collection.EditRecordScreen
 import app.vinilogs.feature.collection.RecordDetailScreen
 import app.vinilogs.feature.collection.StatsScreen
+import app.vinilogs.feature.collection.addedit.AddRecordScreen
+import app.vinilogs.feature.collection.addedit.EditRecordScreen
 import app.vinilogs.feature.collection.shelf.ShelfScreen
 
 /** The "Shelf" bottom-bar tab. */
