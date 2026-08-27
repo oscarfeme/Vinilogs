@@ -25,6 +25,7 @@ firestore-debug.log
 ui-debug.log
 firebase/emulator-data/
 firebase/seed/node_modules/
+firebase/node_modules/
 
 # IDE
 .idea/

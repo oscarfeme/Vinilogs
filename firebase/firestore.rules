@@ -1,11 +1,77 @@
 rules_version = '2';
 
-// Placeholder — deny-by-default. T-14 replaces this with the real per-collection rules
-// (owner-only reads/writes on users/{uid}/records, public reads on publicRecords, write-only
-// reports) plus a rules unit test suite. Do not weaken this without a test proving the new
-// rule can't leak a private field — see 02-ARCHITECTURE.md §3, ADR-4.
+// T-14: real per-collection rules for `users` and `records` (NFR-5, NFR-6). See
+// firebase/tests/firestore.rules.test.js for the unit test suite this file is paired with —
+// this file is not the deliverable on its own.
+//
+// - users/{uid}: any authenticated user can read (needed by discovery search, T-22/T-23 —
+//   scoped here per T-14's stated task description even though discovery itself hasn't
+//   landed yet). Only the owner can write. `recordCount` is excluded from client writes:
+//   it is denormalised and Cloud-Function-maintained (`onRecordWritten`,
+//   02-ARCHITECTURE.md §8/§3) and a Cloud Function using the Admin SDK bypasses these rules
+//   entirely, so denying it here client-side does not block that function. Chosen field-
+//   level granularity: only `recordCount` is locked down; every other field on the profile
+//   is owner-writable as a whole document rather than an exhaustive per-field allow-list —
+//   02-ARCHITECTURE.md §4/§3 doesn't specify field-level write rules for `users` beyond
+//   calling out `recordCount` as server-maintained, so a full allow-list would be scope
+//   creep ahead of FR-A4 actually landing its exact editable-field set. See the PR for this
+//   task for the full statement of this assumption.
+// - users/{uid}/records/{recordId}: owner-only reads AND writes, full stop. This is the
+//   privacy-critical rule ADR-4 exists to make safe: `purchasePrice`, `purchaseDate`,
+//   `rating` and `notes` are private fields Firestore rules cannot hide within a document,
+//   so the entire `records` collection is owner-only — no other authenticated user, ever.
+//   Discovery reads a separate `publicRecords` projection instead (T-20/T-21, Phase 2, not
+//   this task).
+// - reports/{reportId} and users/{uid}/publicRecords/{recordId}: Phase 2 (T-20/T-21).
+//   Deliberately NOT given explicit rules below — per 00-README.md's "no hooks for later"
+//   principle applied to rules scope, they fall through to the deny-by-default catch-all
+//   until T-20/T-21 build the projection and write real rules for it. Do not add rules for
+//   them here.
+// - Everything else: deny-by-default via the outer catch-all, unchanged from the T-04
+//   placeholder this file replaces.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    match /users/{uid} {
+      // Any authenticated user can read any profile doc — needed for discovery search
+      // (Phase 2). Not a privacy risk: the users doc itself has no private fields (those
+      // all live on `records`, which is owner-only below).
+      allow read: if isSignedIn();
+
+      // The client creates its own profile document at sign-up (FR-A1) — no Cloud Function
+      // does this — so `create` must be owner-gated like any other write, with
+      // `recordCount` pinned to 0 since nothing has been added yet.
+      allow create: if isOwner(uid)
+        && request.resource.data.recordCount == 0;
+
+      // Owner-only updates, and recordCount may never move via a client write in either
+      // direction — only `onRecordWritten` (Admin SDK, bypasses rules) may change it.
+      allow update: if isOwner(uid)
+        && request.resource.data.recordCount == resource.data.recordCount;
+
+      allow delete: if isOwner(uid);
+
+      match /records/{recordId} {
+        // Owner-only reads AND writes, full stop — see file header / ADR-4. Deliberately no
+        // separate create/update/delete split: there is no field on `records` that should
+        // ever be readable or writable by anyone but the owner, so a single read/write rule
+        // is correct here (unlike `users/{uid}` above, which needs public reads).
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Deny-by-default fallback (unchanged from the T-04 placeholder). Everything not
+    // explicitly allowed above — including reports/{reportId} and
+    // users/{uid}/publicRecords/{recordId} (Phase 2, T-20/T-21) — falls through to here and
+    // is denied.
     match /{document=**} {
       allow read, write: if false;
     }

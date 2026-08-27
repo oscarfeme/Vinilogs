@@ -112,7 +112,9 @@ internal fun Record.toDraft(): RecordDraft =
         speed = speed,
         condition = condition,
         purchasePrice = purchasePrice?.let { formatPrice(it) }.orEmpty(),
-        purchaseDate = purchaseDate?.let { LocalDate.ofInstant(it, ZoneOffset.UTC).toString() }.orEmpty(),
+        // LocalDate.ofInstant(Instant, ZoneId) needs API 34 -- minSdk here is 26, so go via
+        // Instant.atZone(...).toLocalDate() instead (available since API 26).
+        purchaseDate = purchaseDate?.let { it.atZone(ZoneOffset.UTC).toLocalDate().toString() }.orEmpty(),
         rating = rating,
         notes = notes.orEmpty(),
         coverUrl = coverUrl,

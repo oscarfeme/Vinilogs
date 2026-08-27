@@ -30,9 +30,8 @@ import app.vinilogs.core.designsystem.theme.vinilogsColors
  *
  * Gap note: this belongs in `core:designsystem` alongside the rest of the type/space/component
  * tokens it's built from, but that module is outside Track D's boundary (CLAUDE.md rule 2).
- * First defined in T-15 (`ShelfScreen`'s search field) and duplicated here as-is for T-17's
- * manual-entry form, since these are independent branches off the same base and can't share a
- * commit; flagged in both PRs as a candidate to hoist into `core:designsystem`.
+ * Defined locally here (T-15) and reused as-is by T-17's manual-entry form; flagged in both
+ * PRs as a candidate to hoist once another track needs the same field.
  */
 @Composable
 fun CollectionTextField(
