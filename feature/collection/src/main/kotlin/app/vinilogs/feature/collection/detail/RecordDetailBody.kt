@@ -18,7 +18,6 @@ import app.vinilogs.core.model.Record
 import app.vinilogs.feature.collection.component.ConditionChip
 import app.vinilogs.feature.collection.component.MetadataRow
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneOffset
 
 @Composable
@@ -120,4 +119,6 @@ private fun Record.metadataRows(): List<Pair<String, String>> =
 
 private fun Double.asCurrency(): String = if (this == toLong().toDouble()) "$${toLong()}" else "$$this"
 
-private fun Instant.asDate(): String = LocalDate.ofInstant(this, ZoneOffset.UTC).toString()
+// LocalDate.ofInstant(Instant, ZoneId) needs API 34 -- minSdk here is 26, so go via
+// Instant.atZone(...).toLocalDate() instead (available since API 26).
+private fun Instant.asDate(): String = atZone(ZoneOffset.UTC).toLocalDate().toString()
