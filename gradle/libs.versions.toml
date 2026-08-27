@@ -22,6 +22,21 @@ hiltNavigationCompose = "1.2.0"
 # Coroutines
 coroutines = "1.9.0"
 
+# Room (T-10) — local persistence, source of truth for the user's own collection (ADR-2).
+# 2.8.x is the current stable line; Room 3.0 (KMP-first) is alpha-only as of this writing --
+# not used here.
+room = "2.8.4"
+
+# Robolectric (T-10, core:data only) — Room DAO tests need a real SQLite engine, and this
+# module is a plain Android Gradle Plugin library (not Kotlin Multiplatform), so Room's
+# context-free BundledSQLiteDriver path (`Room.inMemoryDatabaseBuilder<T>()`, no args) isn't
+# on the classpath here -- only the classic Context-taking builder is, and getting a real
+# Context outside an instrumented test needs Robolectric. Pulled in as a JUnit4 test via the
+# JUnit5 Vintage engine so it still runs under the project's `useJUnitPlatform()` test tasks.
+robolectric = "4.16.1"
+junit4 = "4.13.2"
+androidxTestCore = "1.6.1"
+
 # Firebase (T-04) — Auth, Firestore, Storage per 00-README.md's locked backend decision
 googleServices = "4.5.0"
 firebaseBom = "34.18.0"
@@ -88,6 +103,17 @@ hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref
 hilt-compiler = { group = "com.google.dagger", name = "hilt-android-compiler", version.ref = "hilt" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 hilt-android-testing = { group = "com.google.dagger", name = "hilt-android-testing", version.ref = "hilt" }
+
+# Room
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+
+# Robolectric (T-10, core:data only) -- see the version catalog comment above.
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+junit4 = { group = "junit", name = "junit", version.ref = "junit4" }
+junit-vintage-engine = { group = "org.junit.vintage", name = "junit-vintage-engine", version.ref = "junit5" }
+androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
 
 # Coroutines
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "coroutines" }

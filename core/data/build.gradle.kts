@@ -41,13 +41,17 @@ android {
         buildConfigField("String", "DISCOGS_API_KEY", "\"$discogsApiKey\"")
     }
 
-    // Repository unit tests mock the Firebase SDK directly (no Robolectric, no live Firebase
-    // project -- see T-08's PR notes). Building small SDK value objects on that path (e.g.
-    // UserProfileChangeRequest.Builder) touches Android stub methods (android.text.TextUtils)
-    // that the plain android.jar throws on by default outside Robolectric. Returning defaults
-    // instead of throwing is the standard escape hatch for that, per
-    // https://developer.android.com/r/studio-ui/build/not-mocked.
     testOptions {
+        // Robolectric (RecordLocalDataSourceTest, T-10) needs the merged manifest/resources on
+        // its classpath.
+        unitTests.isIncludeAndroidResources = true
+        // Repository unit tests that mock the Firebase SDK directly (T-08, no Robolectric, no
+        // live Firebase project) hit a separate issue: building small SDK value objects on that
+        // path (e.g. UserProfileChangeRequest.Builder) touches Android stub methods
+        // (android.text.TextUtils) that the plain android.jar throws on by default outside
+        // Robolectric. Returning defaults instead of throwing is the standard escape hatch for
+        // that, per https://developer.android.com/r/studio-ui/build/not-mocked -- both settings
+        // are needed side by side since this module now has tests exercising each path.
         unitTests.isReturnDefaultValues = true
     }
 }
@@ -76,7 +80,21 @@ dependencies {
     implementation(libs.findLibrary("retrofit-kotlinx-serialization-converter").get())
     implementation(libs.findLibrary("okhttp").get())
     testImplementation(libs.findLibrary("okhttp-mockwebserver").get())
-}
 
-// Room data source is added by the task that implements it (T-10) rather than pinned here,
-// since its exact config isn't specified in the locked docs.
+    // Room (T-10) — local persistence, source of truth for the user's own collection (ADR-2).
+    // room-compiler is a KSP annotation processor, not a regular dependency; the `vinilogs.
+    // android.hilt` convention plugin (applied above) already applies the KSP Gradle plugin.
+    implementation(libs.findLibrary("room-runtime").get())
+    implementation(libs.findLibrary("room-ktx").get())
+    ksp(libs.findLibrary("room-compiler").get())
+
+    // Robolectric (T-10, this module only) -- gives RecordDaoTest a real Context + SQLite
+    // engine to build an in-memory Room database against, on the plain JVM (no device/
+    // emulator). See the version catalog comment for why this is needed instead of Room's
+    // context-free BundledSQLiteDriver path. Runs as a JUnit4 test via the Vintage engine,
+    // which build-logic's shared TestingConfig.kt already turns on via useJUnitPlatform().
+    testImplementation(libs.findLibrary("robolectric").get())
+    testImplementation(libs.findLibrary("androidx-test-core").get())
+    testImplementation(libs.findLibrary("junit4").get())
+    testImplementation(libs.findLibrary("junit-vintage-engine").get())
+}
