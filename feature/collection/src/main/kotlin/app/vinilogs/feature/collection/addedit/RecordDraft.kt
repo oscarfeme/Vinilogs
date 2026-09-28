@@ -1,5 +1,6 @@
 package app.vinilogs.feature.collection.addedit
 
+import app.vinilogs.core.model.CatalogResult
 import app.vinilogs.core.model.Condition
 import app.vinilogs.core.model.Format
 import app.vinilogs.core.model.Record
@@ -119,6 +120,23 @@ internal fun Record.toDraft(): RecordDraft =
         notes = notes.orEmpty(),
         coverUrl = coverUrl,
         tags = tags.joinToString(", "),
+    )
+
+/**
+ * FR-B2: prefills a fresh [RecordDraft] from a search result -- format/speed/condition keep
+ * [RecordDraft]'s defaults (Discogs doesn't return the physical copy's condition, and its
+ * format/speed data is inconsistent enough not to trust blindly); artist/title/year/label/
+ * catalogue-number/cover all come straight from the catalogue hit. Every field stays editable
+ * on the form that follows (FR-B2's "all prefilled fields remain editable").
+ */
+internal fun CatalogResult.toDraft(): RecordDraft =
+    RecordDraft(
+        artist = artist,
+        title = title,
+        year = year?.toString().orEmpty(),
+        label = label.orEmpty(),
+        catalogNumber = catalogNumber.orEmpty(),
+        coverUrl = coverUrl,
     )
 
 private fun formatPrice(value: Double): String =

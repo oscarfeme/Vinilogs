@@ -2,6 +2,7 @@ package app.vinilogs.feature.collection.addedit
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import app.vinilogs.core.model.CatalogResult
 import app.vinilogs.core.model.CollectionFilter
 import app.vinilogs.core.model.CollectionSort
 import app.vinilogs.core.testing.MainDispatcherExtension
@@ -155,6 +156,88 @@ class AddEditRecordViewModelTest {
                 val result = awaitItem()
                 assertFalse(result.saved)
                 assertNotNull(result.saveError)
+            }
+        }
+
+    @Test
+    fun `applyCatalogResult prefills the draft -- FR-B2`() =
+        runTest {
+            val repository = FakeCollectionRepository()
+            val viewModel = addViewModel(repository)
+            val result =
+                CatalogResult(
+                    discogsId = 999L,
+                    artist = "Miles Davis",
+                    title = "Kind of Blue",
+                    year = 1959,
+                    label = "Columbia",
+                    catalogNumber = "CL 1355",
+                    coverUrl = null,
+                )
+
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.applyCatalogResult(result)
+                val prefilled = awaitItem()
+                assertEquals("Miles Davis", prefilled.draft.artist)
+                assertEquals("Kind of Blue", prefilled.draft.title)
+            }
+        }
+
+    @Test
+    fun `saving a record prefilled from a catalog result keeps its discogsId -- FR-B2, ADR-3`() =
+        runTest {
+            val repository = FakeCollectionRepository()
+            val viewModel = addViewModel(repository)
+            val result =
+                CatalogResult(
+                    discogsId = 999L,
+                    artist = "Miles Davis",
+                    title = "Kind of Blue",
+                    year = 1959,
+                    label = "Columbia",
+                    catalogNumber = "CL 1355",
+                    coverUrl = null,
+                )
+
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.applyCatalogResult(result)
+                awaitItem()
+                viewModel.save()
+                val saved = awaitItem()
+                assertTrue(saved.saved)
+            }
+
+            repository.observeCollection(CollectionFilter(), CollectionSort.ARTIST).test {
+                assertEquals(999L, awaitItem().first().discogsId)
+            }
+        }
+
+    @Test
+    fun `every prefilled field from a catalog result stays editable before saving -- FR-B2`() =
+        runTest {
+            val repository = FakeCollectionRepository()
+            val viewModel = addViewModel(repository)
+            val result =
+                CatalogResult(
+                    discogsId = 999L,
+                    artist = "Miles Davis",
+                    title = "Kind of Blue",
+                    year = 1959,
+                    label = "Columbia",
+                    catalogNumber = "CL 1355",
+                    coverUrl = null,
+                )
+
+            viewModel.uiState.test {
+                awaitItem()
+                viewModel.applyCatalogResult(result)
+                awaitItem()
+                viewModel.updateDraft { it.copy(title = "Kind of Blue (Mono)") }
+                val edited = awaitItem()
+                assertEquals("Kind of Blue (Mono)", edited.draft.title)
+                assertEquals("Miles Davis", edited.draft.artist) // untouched fields survive the edit
             }
         }
 
