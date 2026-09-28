@@ -18,7 +18,10 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindAuthRepository(impl: FirebaseAuthRepository): AuthRepository
 
+    // internal: RoomCollectionRepository is internal (see its own doc for why) -- matches the
+    // DiscogsModule.provideDiscogsApi precedent for a @Provides/@Binds function whose parameter
+    // type is module-internal.
     @Binds
     @Singleton
-    abstract fun bindCollectionRepository(impl: RoomCollectionRepository): CollectionRepository
+    internal abstract fun bindCollectionRepository(impl: RoomCollectionRepository): CollectionRepository
 }
