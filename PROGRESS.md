@@ -121,14 +121,87 @@ above. What's still outstanding from this checklist:
    tests have never executed outside CI's permanently-flaky emulator job. Now that a physical
    device works, this is finally possible — worth doing before trusting those tests further.
 
-## Known issues to fix (found 2026-09-28, not yet fixed)
+## Known issues to fix (found 2026-09-28)
 
-- **No Firestore→Room sync** (T-11 gap) — see above. Highest-priority of the two.
+- ~~**No Firestore→Room sync**~~ — **fixed**, PR #24 (`fix/T-11-firestore-room-sync` →
+  `chore/local-firebase-emulator-dev-setup`, stacked since it needs the emulator wiring from
+  that PR to be manually verifiable). Auth-state-driven listener on `users/{uid}/records`,
+  upserts into Room, skips clobbering a still-`PENDING` local row. Also wires `searchCatalog` to
+  the real `DiscogsCatalogClient` (was a `NotImplementedError` stub). 61 `core:data` tests
+  green.
 - **No app theme set** on `MainActivity` — raw system title bar shows instead of the app's own
   chrome. Quick fix, `AndroidManifest.xml` + whatever theme `core:designsystem` already defines.
+  Not yet fixed.
 - **Bottom-tab `saveState`/`restoreState` behaviour** — still unconfirmed.
 - **`./gradlew connectedDebugAndroidTest`** — still never run for real; do this now that a
   physical device is available.
+
+## 2026-09-28, later: three tasks run in parallel via subagents in isolated git worktrees
+
+T-16, a T-11 follow-up, and T-19 were dispatched as three parallel background agents (each
+`isolation: "worktree"`, so no shared working directory) once PR #22
+(`chore/local-firebase-emulator-dev-setup`) was up. Module boundaries were chosen deliberately
+to minimize merge conflicts: T-16 stays in `feature:collection`, the T-11 fix stays in
+`core:data`, T-19 spans `feature:auth` + a real `UserRepository` implementation in `core:data`
+(mirroring T-08/T-11's own precedent of each task implementing its own repository).
+
+- **PR #23 — T-16 catalogue search** (`feat/T-16-catalog-search` → `master`, MERGEABLE).
+  New `feature/collection/.../search/` package: `CatalogSearchViewModel` (400ms debounce
+  matching `02-ARCHITECTURE.md` §2, maps `DiscogsFailure` to offline/rate-limited/generic —
+  every one of those states plus no-results keeps "Add manually" visible per FR-B1),
+  `CatalogSearchScreen`. `AddEditRecordScreen`/`AddEditRecordViewModel` extended with a
+  `applyCatalogResult()`/`CatalogResult.toDraft()` path so a search hit prefills into the
+  existing T-17 form rather than a second form. Built and tested entirely against
+  `FakeCollectionRepository` — did not touch `core:data`, so it doesn't depend on the T-11 PR
+  merging first; real Discogs search will "just work" once #24 lands since both go through the
+  same `CollectionRepository.searchCatalog` interface. 27 new tests across ViewModel/mapper/
+  Compose UI layers.
+- **PR #24 — T-11 follow-up** (`fix/T-11-firestore-room-sync` →
+  `chore/local-firebase-emulator-dev-setup`, MERGEABLE) — see "Known issues to fix" above.
+- **PR #25 — T-19 profile screens** (`feat/T-19-profile-screens` →
+  `chore/local-firebase-emulator-dev-setup`, MERGEABLE). `ProfileScreen`/`EditProfileScreen`
+  replace their stubs (FR-A4/A5); `SettingsScreen` stays a stub, out of scope. First real
+  `UserRepository` implementation (`FirebaseUserRepository`) — `observeProfile`/`updateProfile`
+  real (Firestore listener + `SetOptions.merge()` so `recordCount`/`createdAt` survive an edit);
+  `searchUsers`/`observePublicCollection`/`sharedRecords`/`report` stubbed with
+  `NotImplementedError` pointing at T-22, matching `RoomCollectionRepository`'s own precedent
+  for `searchCatalog`/`exportCsv`. Avatar upload implemented for real: a new narrow
+  `AvatarUploader`/`FirebaseAvatarUploader` abstraction (not one of the three fixed repository
+  interfaces — `UserRepository.updateProfile` takes an already-resolved `avatarUrl: String?`,
+  so raw `Uri` upload needed its own home) uploading to Storage `avatars/{uid}.jpg`, using the
+  modern Photo Picker (no storage permission needed). `FirebaseModule` gained
+  `provideFirebaseStorage()`, mirroring the existing Auth/Firestore emulator-wiring pattern.
+  `core:designsystem` gained a reusable `Avatar` component.
+  **This agent hit a Claude session rate limit mid-task** (terminated right after pushing its
+  commit, before opening the PR) — recovered by verifying its already-pushed, already-committed
+  work directly (`./gradlew build` + targeted `ktlintCheck`/`detekt` on the touched modules, all
+  clean) and creating the PR by hand from its already-written body. No agent work was lost.
+
+All three PRs are independently mergeable; #24 and #25 both stack on #22
+(`chore/local-firebase-emulator-dev-setup`) since they both needed its emulator-wiring plumbing
+(Storage's `provideFirebaseStorage()` follows the same `BuildConfig.USE_FIREBASE_EMULATOR`
+pattern #22 introduced for Auth/Firestore). **Suggested merge order**: #22 first, then #24 and
+#25 (rebase/retarget to `master` once #22 lands — both should go cleanly since neither touches
+#22's own files), then #23 (independent of the other three throughout).
+
+**Status after this batch**: T-11's gap is fixed, T-16 and T-19 are done. **Only T-13 (cover
+image pipeline) and T-39 (shelf-level edit entry point, added 2026-09-28 — see
+`03-PHASES-AND-TASKS.md`) remain unstarted in Phase 1**, plus the still-open items in "Known
+issues to fix" below (no app theme, tab-state restoration unconfirmed, `connectedDebugAndroidTest`
+never run for real).
+
+**Process note for next time**: don't manually edit a subagent's worktree while `ListAgents`
+still shows it `running`, even after a `<task-notification status="completed">` arrives — that
+notification fires every time the agent's *turn* ends, not when the agent itself is done (a
+single task can span several turns while it waits on its own background shell commands). This
+session hit exactly that: after two "completed" notifications for the T-11 agent, a `SendMessage`
+attempt failed with "worktree could not be verified," which looked like the agent was dead —
+manually fixing lint errors directly in its worktree seemed reasonable at that point, but the
+agent was still alive and doing the same fixes concurrently, and it detected the drift, discarded
+the manual edits via `git checkout --`, and proceeded correctly on its own. No harm done here,
+but the reliable signal is `ListAgents`' `running`/`idle`/`stopped` status, not the presence or
+absence of a task notification, and a `SendMessage` failure to a `running` agent is worth
+retrying rather than treated as proof it's gone.
 
 ## Known gotchas from this session (2026-08-24 to 2026-08-26)
 
