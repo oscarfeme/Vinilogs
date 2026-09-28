@@ -47,42 +47,33 @@ internal fun Record.toFirestoreMap(): Map<String, Any?> =
  *
  * Returns null for a document missing any field this mapping can't sensibly default -- artist,
  * title, the three enums, and the two timestamps -- rather than throwing and killing the whole
- * snapshot listener over one malformed remote document.
+ * snapshot listener over one malformed remote document. Built as a single [runCatching] over a
+ * `requireNotNull`-per-field [Record] construction rather than a chain of early returns: with
+ * seven required fields, both an equivalent `if (a == null || b == null || ...)` guard and a
+ * `?: return null` per field trip detekt's `ComplexCondition`/`ReturnCount` thresholds -- this
+ * reads as one expression and keeps the "missing field -> null" behavior identical.
  */
-internal fun DocumentSnapshot.toRecord(): Record? {
-    val artist = getString("artist")
-    val title = getString("title")
-    val format = getString("format")?.let { runCatching { Format.valueOf(it) }.getOrNull() }
-    val speed = getString("speed")?.let { runCatching { Speed.valueOf(it) }.getOrNull() }
-    val condition = getString("condition")?.let { runCatching { Condition.valueOf(it) }.getOrNull() }
-    val createdAt = getDate("createdAt")?.toInstant()
-    val updatedAt = getDate("updatedAt")?.toInstant()
-
-    if (artist == null || title == null || format == null || speed == null ||
-        condition == null || createdAt == null || updatedAt == null
-    ) {
-        return null
-    }
-
-    return Record(
-        id = id,
-        artist = artist,
-        title = title,
-        year = getLong("year")?.toInt(),
-        label = getString("label"),
-        catalogNumber = getString("catalogNumber"),
-        format = format,
-        speed = speed,
-        condition = condition,
-        purchasePrice = getDouble("purchasePrice"),
-        purchaseDate = getDate("purchaseDate")?.toInstant(),
-        rating = getLong("rating")?.toInt(),
-        notes = getString("notes"),
-        coverUrl = getString("coverUrl"),
-        discogsId = getLong("discogsId"),
-        tags = (get("tags") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
-        syncState = SyncState.SYNCED,
-        createdAt = createdAt,
-        updatedAt = updatedAt,
-    )
-}
+internal fun DocumentSnapshot.toRecord(): Record? =
+    runCatching {
+        Record(
+            id = id,
+            artist = requireNotNull(getString("artist")),
+            title = requireNotNull(getString("title")),
+            year = getLong("year")?.toInt(),
+            label = getString("label"),
+            catalogNumber = getString("catalogNumber"),
+            format = Format.valueOf(requireNotNull(getString("format"))),
+            speed = Speed.valueOf(requireNotNull(getString("speed"))),
+            condition = Condition.valueOf(requireNotNull(getString("condition"))),
+            purchasePrice = getDouble("purchasePrice"),
+            purchaseDate = getDate("purchaseDate")?.toInstant(),
+            rating = getLong("rating")?.toInt(),
+            notes = getString("notes"),
+            coverUrl = getString("coverUrl"),
+            discogsId = getLong("discogsId"),
+            tags = (get("tags") as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
+            syncState = SyncState.SYNCED,
+            createdAt = requireNotNull(getDate("createdAt")?.toInstant()),
+            updatedAt = requireNotNull(getDate("updatedAt")?.toInstant()),
+        )
+    }.getOrNull()

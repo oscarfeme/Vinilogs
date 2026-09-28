@@ -49,12 +49,13 @@ import javax.inject.Inject
  * `flatMapLatest` on the auth-state uid means signing out (or switching accounts) detaches the
  * previous listener before anything new attaches, so nothing leaks or cross-contaminates between
  * accounts. See [applyRemoteChange] for how this avoids clobbering an in-flight local write.
+ *
+ * `internal`: `RepositoryModule` (same module) is the only place that names this type directly --
+ * everywhere else depends on the public [CollectionRepository] interface. This became
+ * load-bearing once the constructor started taking the also-internal `DiscogsCatalogClient`
+ * (T-12): Kotlin disallows a public class exposing an internal type in a public constructor
+ * signature.
  */
-
-// internal: RepositoryModule (same module) is the only place that names this type directly --
-// everywhere else depends on the public CollectionRepository interface. This became load-bearing
-// once the constructor started taking the also-internal DiscogsCatalogClient (T-12): Kotlin
-// disallows a public class exposing an internal type in a public constructor signature.
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class RoomCollectionRepository
     @Inject
