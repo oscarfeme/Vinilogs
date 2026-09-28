@@ -28,6 +28,16 @@ if (discogsApiKey.isBlank()) {
     )
 }
 
+// Local-dev escape hatch (same local.properties -> BuildConfig pattern as discogsApiKey
+// above) so a debug build can point every Firebase SDK at the local Emulator Suite instead of
+// a real project -- see firebase/README.md. Opt-in via `firebase.useEmulator=true` rather than
+// defaulting on, so a debug build still works unmodified against a real dev project for anyone
+// who has app/google-services.json pointed at one. FirebaseModule only honours this flag on a
+// debuggable build type (checked at runtime via BuildConfig.DEBUG), so it can never affect a
+// release build even if left set in a developer's local.properties.
+val useFirebaseEmulator: Boolean = localProperties.getProperty("firebase.useEmulator", "false").toBoolean()
+val firebaseEmulatorHost: String = localProperties.getProperty("firebase.emulatorHost", "10.0.2.2")
+
 android {
     namespace = "app.vinilogs.core.data"
 
@@ -39,6 +49,8 @@ android {
 
     defaultConfig {
         buildConfigField("String", "DISCOGS_API_KEY", "\"$discogsApiKey\"")
+        buildConfigField("boolean", "USE_FIREBASE_EMULATOR", useFirebaseEmulator.toString())
+        buildConfigField("String", "FIREBASE_EMULATOR_HOST", "\"$firebaseEmulatorHost\"")
     }
 
     testOptions {
