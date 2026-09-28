@@ -3,26 +3,10 @@ package app.vinilogs.feature.auth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-// Stub bodies only — real implementations land in T-19 (Profile, EditProfile)
-// and a later polish task (Settings isn't explicitly assigned in
-// 03-PHASES-AND-TASKS.md; treat it as part of T-19's track until scoped).
-
-@Composable
-fun ProfileScreen(
-    onNavigateToEditProfile: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StubScreen("Profile", modifier)
-}
-
-@Composable
-fun EditProfileScreen(
-    onNavigateBack: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    StubScreen("Edit Profile", modifier)
-}
+// ProfileScreen and EditProfileScreen got their real implementations in T-19
+// (ProfileScreen.kt, EditProfileScreen.kt). SettingsScreen stays a stub -- it isn't explicitly
+// assigned in 03-PHASES-AND-TASKS.md and T-19's brief explicitly excludes it; leave it for
+// whichever later polish task claims it (sign-out almost certainly lives here).
 
 @Composable
 fun SettingsScreen(
