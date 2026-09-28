@@ -190,6 +190,25 @@ image pipeline) and T-39 (shelf-level edit entry point, added 2026-09-28 — see
 issues to fix" below (no app theme, tab-state restoration unconfirmed, `connectedDebugAndroidTest`
 never run for real).
 
+**Real CI regression found and fixed the same day**: #22 (and by inheritance #24/#25, both
+stacked on it) failed the **"Firestore rules tests"** job — a genuinely new failure, not the
+known emulator flake. Root cause: `npm install` run locally on Windows/npm 11 during this
+session's local-emulator setup left `firebase/package-lock.json` with a lockfile entry for
+`tinyglobby`'s optional `picomatch@4.0.7` peer dependency that was never actually installed
+locally (platform-gated optional dependency). CI's `npm ci` (Linux, npm 10.8.2 via
+`actions/setup-node`) treats that as lockfile drift and hard-fails: `npm error Missing:
+picomatch@4.0.7 from lock file`. Fixed with `firebase/.npmrc` (`omit=optional` — nothing in
+that directory's own scripts needs `tinyglobby`) and a regenerated lockfile; verified against a
+real local Firestore emulator (`npm test`, 25/25 passing) before pushing. Confirmed green on
+real CI afterward on all three affected PRs. **#23 was never affected** — it targets `master`
+directly and never inherited the broken lockfile.
+
+**Current CI state, all four PRs (2026-09-28)**: ktlint+detekt, Unit tests, Assemble debug,
+Firestore rules tests all green on #22/#23/#24/#25. Only "Compose UI tests (emulator API 34)"
+is red/pending everywhere — confirmed via its own log (`could not connect to TCP port 5554`,
+`Timeout waiting for emulator to boot`, on a `Users/runner/Library/...` macOS runner) to be the
+same pre-existing, code-unrelated GitHub-hosted-runner flake documented since T-05.
+
 **Process note for next time**: don't manually edit a subagent's worktree while `ListAgents`
 still shows it `running`, even after a `<task-notification status="completed">` arrives — that
 notification fires every time the agent's *turn* ends, not when the agent itself is done (a
