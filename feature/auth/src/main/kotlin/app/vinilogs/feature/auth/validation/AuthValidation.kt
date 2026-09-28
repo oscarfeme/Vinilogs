@@ -16,6 +16,17 @@ private val EMAIL_REGEX = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
 const val MIN_PASSWORD_LENGTH = 8
 
+/**
+ * FR-A4 calls for a "short bio" but 01-REQUIREMENTS.md gives no number -- CLAUDE.md rule 7
+ * assumption: cap it at a tweet-length 280 characters, generous enough for "short" while still
+ * bounding what a profile card needs to lay out.
+ */
+const val MAX_BIO_LENGTH = 280
+
+/** Same rule-7 assumption as [MAX_BIO_LENGTH]: a city name never needs this much, but it's a
+ * loose enough ceiling that no real "city, free text" entry should ever hit it. */
+const val MAX_LOCATION_LENGTH = 80
+
 fun validateEmail(email: String): String? =
     when {
         email.isBlank() -> "Enter your email."
@@ -33,3 +44,9 @@ fun validatePasswordForSignUp(password: String): String? =
 fun validatePasswordForSignIn(password: String): String? = if (password.isEmpty()) "Enter your password." else null
 
 fun validateDisplayName(displayName: String): String? = if (displayName.isBlank()) "Enter your name." else null
+
+fun validateBio(bio: String): String? =
+    if (bio.length > MAX_BIO_LENGTH) "Keep your bio under $MAX_BIO_LENGTH characters." else null
+
+fun validateLocation(location: String): String? =
+    if (location.length > MAX_LOCATION_LENGTH) "Keep your location under $MAX_LOCATION_LENGTH characters." else null

@@ -25,6 +25,16 @@ dependencies {
     // androidTest classpath, not just testImplementation (which
     // vinilogs.android.feature already wires up for the JVM ViewModel tests).
     androidTestImplementation(project(":core:testing"))
+
+    // T-19: ProfileScreen's settings icon. core:designsystem depends on this too but only as
+    // `implementation`, so it isn't exposed transitively -- same findLibrary() workaround as
+    // every other multi-segment alias in this repo (see root CLAUDE.md's gotchas section).
+    implementation(libs.findLibrary("androidx-compose-material-icons-core").get())
+
+    // T-19: EditProfileScreen's avatar picker uses the modern Photo Picker
+    // (ActivityResultContracts.PickVisualMedia) rather than a storage permission, per this
+    // task's brief -- that contract lives in activity-compose's rememberLauncherForActivityResult.
+    implementation(libs.findLibrary("androidx-activity-compose").get())
 }
 
 // Sign up, sign in, forgot password, profile (T-09, T-19).

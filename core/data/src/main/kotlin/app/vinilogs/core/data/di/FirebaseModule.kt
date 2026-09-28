@@ -3,6 +3,7 @@ package app.vinilogs.core.data.di
 import app.vinilogs.core.data.BuildConfig
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -45,7 +46,18 @@ object FirebaseModule {
             }
         }
 
+    /** T-19: avatar upload (`FirebaseAvatarUploader`) is this module's first Storage consumer. */
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage =
+        FirebaseStorage.getInstance().apply {
+            if (useEmulator) {
+                useEmulator(BuildConfig.FIREBASE_EMULATOR_HOST, EMULATOR_PORT_STORAGE)
+            }
+        }
+
     // Ports match firebase/firebase.json's emulator config.
     private const val EMULATOR_PORT_AUTH = 9099
     private const val EMULATOR_PORT_FIRESTORE = 8080
+    private const val EMULATOR_PORT_STORAGE = 9199
 }
