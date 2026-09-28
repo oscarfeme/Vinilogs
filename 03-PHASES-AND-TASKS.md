@@ -1,6 +1,8 @@
 # Vinilogs — Phases and Task Assignment
 
-32 tasks, 6 tracks, 4 phases. Task IDs are stable; do not renumber.
+39 tasks, 6 tracks, 4 phases. Task IDs are stable; do not renumber. (The original plan had 32;
+T-39 was added post-planning, 2026-09-28 — new tasks get the next free ID appended wherever
+they fit thematically, not renumbered into phase order.)
 
 ## Agent tracks
 
@@ -56,6 +58,7 @@ aeroplane mode.
 | T-17 | D | Add/edit record — manual form with all fields from FR-B4, validation, works fully offline | T-07 | FR-B3, FR-B4 |
 | T-18 | D | Record detail screen: large cover, shared-element transition from shelf, edit, share, delete with confirmation and 5-second undo | T-07 | FR-B5, FR-B9, FR-C5 |
 | T-19 | E | Profile screen and edit profile: avatar upload to Storage, bio, location, privacy toggle | T-08, T-02 | FR-A4, FR-A5 |
+| T-39 | D | Edit entry point directly from the shelf (`ShelfGridItem`/`ShelfListRow`) — today editing a record requires tapping into the T-18 detail screen first, then its pencil icon; add a quicker path (e.g. long-press or a per-card edit affordance) straight into the T-17 edit form. Added post-planning, 2026-09-28. | T-15, T-17 | FR-B5 |
 
 ---
 
