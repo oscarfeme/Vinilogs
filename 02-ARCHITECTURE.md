@@ -308,8 +308,33 @@ to do) but each had a genuinely different cause:
    scope for a same-day pin bump** — decided with the user to do the full cascade (AGP
    9 + a Gradle 9.x wrapper bump) rather than revert Hilt/KSP, but to do it once real
    Android tooling is available locally rather than continue guessing blind through
-   ~2-minute CI round-trips. See `PROGRESS.md`'s "AGP 9 / Gradle 9 migration" section
-   for the concrete next steps and the research already done for it.
+   ~2-minute CI round-trips.
+5. Done, once real Android tooling (JDK 17, Gradle, Android SDK) was installed locally:
+   bumped `agp` to `9.0.1` and the Gradle wrapper to `9.1.0` (the minimum AGP 9.0.1
+   itself requires), matching the research from pass 4. Three follow-on fixes were
+   needed to actually get a green local build, none of them guessed — each was hit and
+   fixed by iterating locally rather than through CI round-trips:
+   - **`android.builtInKotlin` defaults to `true` in AGP 9.0** and is incompatible with
+     KSP (KSP requires the classic `org.jetbrains.kotlin.android` plugin, not built-in
+     Kotlin compilation) — set `android.builtInKotlin=false` explicitly in
+     `gradle.properties`. Every module in this project uses KSP for Hilt, so this isn't
+     optional.
+   - **AGP 9's new DSL is default-on and requires `android.builtInKotlin=true`** —
+     directly contradicting the previous fix, since `org.jetbrains.kotlin.android`
+     otherwise refuses to apply with "not compatible with AGP's 9.0 new DSL". Set
+     `android.newDsl=false` in `gradle.properties` as a bridge. This flag is documented
+     as removed in AGP 10 (mid-2026) — revisit once AGP's built-in Kotlin mode supports
+     KSP, or KSP no longer needs the classic plugin.
+   - **`targetSdk` is removed from the library variant DSL entirely in AGP 9** (not just
+     deprecated). Moved to `testOptions.targetSdk`/`lint.targetSdk` in
+     `AndroidLibraryConventionPlugin.kt`, per AGP's own deprecation-warning text; the
+     application variant DSL (`AndroidApplicationConventionPlugin.kt`) still sets it
+     directly, unaffected.
+   With those three changes, `./gradlew build` passed clean, first time, on every module
+   and both variants — the first full local build this project has ever had (previously
+   verified only through GitHub Actions CI). `ksp` stayed pinned at `2.3.0` (pass 2's
+   pin) rather than moving to a newer 2.3.x now that AGP is actually on 9.0+ — untested,
+   left as later cleanup, not required.
 
 Third-party SDKs (Firebase, KSP, AGP, Hilt) move faster than a version pin written once
 at project start and don't always move in lockstep with each other; expect to revisit

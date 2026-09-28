@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-build-only (app/src/debug, never merged into a release build): permits cleartext HTTP
+  to the hosts the Firebase Local Emulator Suite runs on, per core/data's FirebaseModule
+  emulator wiring (BuildConfig.USE_FIREBASE_EMULATOR, firebase/README.md). Android blocks all
+  cleartext traffic by default at targetSdk 28+, which otherwise fails every emulator call with
+  "Cleartext HTTP traffic to <host> not permitted", since the emulator SDKs talk plain HTTP,
+  not HTTPS. 10.0.2.2 is the AVD's alias for the host machine; localhost/127.0.0.1 cover a
+  physical device reached via `adb reverse`.
+-->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

@@ -5,145 +5,130 @@ where things actually stand. Update it as tasks land. Superseded entries can be 
 they're no longer useful context, but don't delete the "known gotchas" material below without
 folding it into `CLAUDE.md` first.
 
-## Immediate next step: AGP 9 / Gradle 9 migration (do this before anything else)
+## Where things stand (updated 2026-09-28)
 
-**CI is currently red on `feat/T-07-testing-fakes`** (and on the shared base branch
-`feat/T-01-repo-scaffold`) for a known, understood reason — read this before running
-step 2 of the checklist below, since it will fail as-is.
-
-**What happened**: `02-ARCHITECTURE.md`'s ADR-7 (Kotlin 2.0.21 → 2.3.21, forced by a
-Firebase Auth metadata incompatibility — read the full ADR before touching any of these
-pins again) cascaded through four passes of dependent version fixes — build-logic
-classpath, a KSP pin, a Hilt bump — and the fourth pass hit a hard wall: **Hilt
-2.60.1's Gradle plugin refuses to apply on anything below AGP 9.0.0**
-(`"The Hilt Android Gradle plugin is only compatible with Android Gradle plugin (AGP)
-version 9.0.0 or higher (found Android Gradle Plugin version 8.6.1)"`), and this
-project is pinned to AGP 8.6.1. Research (google/dagger#5083, #4944) suggests Hilt's
-KSP2 support and the AGP 9 requirement shipped together — no older Hilt release is
-expected to give KSP2 support on AGP 8.x.
-
-**Decision (made with the user 2026-08-26, once real Android tooling was installed on
-this machine)**: do the full cascade — bump AGP to 9.0+ and the Gradle wrapper to
-9.x — rather than revert the Kotlin/KSP/Hilt bumps. Do it locally, now that real
-tooling exists, instead of continuing to iterate blind through ~2-minute CI-only
-round-trips (which is how passes 1–4 above were done, in a sandbox with no JDK/SDK).
-
-**Research already done, so the next session doesn't have to redo it** (all verified
-via WebFetch of `developer.android.com/build/releases/agp-9-0-0-release-notes` and
-KSP/Dagger GitHub release notes, not guessed):
-
-- Target **AGP 9.0.1** (latest as of this writing, Jan 2026) — needs **Gradle 9.1.0**
-  minimum/default (not just "any Gradle 9.x"). SDK Build Tools minimum 36.0.0. JDK
-  minimum 17 (already satisfied).
-- **`android.builtInKotlin` defaults to `true` in AGP 9.0** and is incompatible with
-  KSP (KSP requires the classic `org.jetbrains.kotlin.android` plugin) — this project
-  uses KSP for Hilt annotation processing, so **set `android.builtInKotlin=false`
-  explicitly in `gradle.properties`** as part of this migration, or every KSP-consuming
-  module breaks in a new way. Don't skip this — it's not optional given this project's
-  architecture.
-- **`targetSdk` is removed from the library variant DSL entirely in AGP 9** (not just
-  deprecated — this project already has the deprecation warning surfacing in CI logs:
-  `AndroidLibraryConventionPlugin.kt:18:21 'targetSdk: Int?' is deprecated`). Fix this
-  as part of the same change — move it to `testOptions.targetSdk`/`lint.targetSdk` per
-  the warning text, or drop it if it's not actually needed there.
-- AGP 9 also removes legacy `BaseExtension`/variant APIs (e.g. `applicationVariants`)
-  in favor of the `androidComponents`/`androidComponents.onVariants` API — grep
-  `build-logic/convention/src/main/kotlin/*.kt` for any such legacy usage before
-  assuming this migration is DSL-pin-only.
-- Once AGP is actually on 9.0+, `ksp` can likely go back to the newest 2.3.x (the
-  `2.3.0` pin from ADR-7 pass 2 was specifically to avoid an AGP-9-only API call that
-  now legitimately exists) — not required, but worth revisiting as cleanup.
-- There's a temporary escape hatch, `android.newDsl=false` in `gradle.properties`, if
-  the new-DSL-only requirement proves too disruptive to land in one pass — but it's
-  documented as removed in AGP 10 (mid-2026), so treat it as a bridge, not a fix.
-
-**How to execute, now that real tooling exists on this machine**:
-1. Confirm tooling is actually on `PATH` after the restart: `java -version`,
-   `./gradlew --version` (this session's shell couldn't see the newly-installed JDK/SDK
-   yet — that's expected, it needs the restart the user is about to do).
-2. Work on `feat/T-01-repo-scaffold` (the shared base branch all these version pins
-   live on) — bump `agp` in `gradle/libs.versions.toml`, the Gradle wrapper in
-   `gradle/wrapper/gradle-wrapper.properties`, add `android.builtInKotlin=false` to
-   `gradle.properties`, fix the `targetSdk` library-DSL usage.
-3. Iterate locally with `./gradlew build` — fast feedback now, unlike the CI-only loop
-   used for passes 1–4. Fix whatever AGP 9's new-DSL-only requirement surfaces.
-4. Only once a local build is green: push, merge into `feat/T-07-testing-fakes`
-   (currently at `62e09cc`; base branch is at `3710963`, both already on `origin`), and
-   re-dispatch CI (`gh workflow run CI --ref feat/T-07-testing-fakes`) to confirm all 4
-   jobs pass before considering T-07 (PR #11) done.
-5. Record the outcome as a continuation of ADR-7 in `02-ARCHITECTURE.md` (pass 5),
-   same pattern as passes 1–4 — what broke, what fixed it, why.
-
-One session-sandbox oddity, probably irrelevant on a real machine but worth knowing if
-it recurs: mid-session, `git checkout <branch>` in this repo's primary working
-directory started failing with `fatal: unable to update HEAD` / `Permission denied` on
-`.git/config`, even for a no-op re-set to the branch already checked out — while
-ordinary working-tree writes, commits, and pushes all worked fine. Worked around by
-doing the branch-specific edits in a separate `git worktree` instead of switching HEAD
-in place. No data was lost (each incident was caught and recovered with
-`git reset --hard HEAD` before anything was pushed), but if a fresh session hits the
-same "unable to update HEAD" error, don't fight it — reach for `git worktree add
-<path> <branch>` instead of `git checkout <branch>`.
-
-## First things to do on a machine with real tooling
-
-Everything in this repo up to 2026-08-26 was built and verified entirely through GitHub
-Actions CI, in a sandbox with **no JDK, Android SDK, or emulator**. Nothing has ever been run
-by a human, on a device, or in Android Studio. If you're picking this up somewhere that has
-real tooling, do this before starting any new task:
-
-1. `git clone`, open in Android Studio, let it sync. First real signal on whether the module
-   graph and Gradle config actually work outside GitHub's runners.
-2. `./gradlew build` — full build, every module.
-3. `./gradlew testDebugUnitTest test` — unit tests.
-4. `./gradlew ktlintCheck detekt` — lint. Should already be clean; if it isn't, something
-   about the local environment differs from CI (Gradle/JDK version, most likely) and is worth
-   tracking down before writing more code on top of it.
-5. Run the app on an emulator or device. Confirm:
-   - It launches to the sign-in stub screen (auth-state routing is hardcoded to always start
-     signed-out — see T-03 notes below, this is expected until T-09).
-   - Every stubbed destination is reachable and doesn't crash.
-   - Switching bottom-bar tabs after navigating into a sub-screen restores each tab's own
-     position (the nav graph uses `saveState`/`restoreState` — never actually confirmed to
-     work).
-   - The bottom bar is hidden on the auth graph, visible on all three main-graph tabs.
-6. `./gradlew connectedDebugAndroidTest` — the Compose UI instrumented tests, for real, on a
-   real emulator. CI's version of this job has a persistent GitHub-hosted-macOS-runner flake
-   (`HVF error: HV_UNSUPPORTED`) that has nothing to do with the code — running it locally is
-   the first real signal on whether these tests actually pass.
-
-None of the above is expected to fail. But "CI is green" and "actually works" have not yet
-been the same claim for this project, and it's worth spending the twenty minutes to make them
-the same claim before trusting the green checkmarks further.
-
-## Where things stand
-
-**Phase 0 (T-01–T-06) is code-complete.** All six tasks, plus a design-direction
-reconciliation (see below), are merged into `feat/T-01-repo-scaffold`, which in turn has a PR
-open (or merged, if you're reading this after — check `git log master` for a merge commit
-titled "Phase 0 complete") into `master`. If that PR is still open, `master` is stale — pull
-`feat/T-01-repo-scaffold` instead, or check whether the PR merged since this was written.
+**16 of the 38 tasks in `03-PHASES-AND-TASKS.md` are merged to `master`**: T-01 through T-12,
+T-14, T-15, T-17, T-18. Phase 0 is complete. Phase 1 is 9/12 done.
 
 | Task | What it delivered | What's deliberately deferred |
 |---|---|---|
-| T-01 | Repo scaffold, Gradle version catalog, build-logic convention plugins, empty module skeletons | — |
-| T-02 | Original design system (theme, typography, components) | Superseded by the design-direction reconciliation below — its placeholder amber palette was explicitly commented "swap freely" |
-| T-03 | Single-activity host, type-safe Navigation Compose graph, three-tab bottom bar, 15 stubbed routes | Auth-state routing (hardcoded to signed-out; T-09's job). Bottom bar icons are generic placeholders. No custom launcher icon/theme. Settings screen ownership is ambiguous in the task doc — flagged, not resolved. **Never run on a device** — see checklist above. |
-| T-04 | Firebase SDK wiring (Auth/Firestore/Storage), Emulator Suite config, seed script, `firebase/README.md` runbook | **The actual `vinilogs-dev`/`vinilogs-prod` Firebase projects do not exist.** Needs a human with Firebase console access — see `firebase/README.md` for the exact steps. Real security rules are T-14's job (current ones are deny-by-default placeholders). |
-| T-05 | GitHub Actions CI: ktlint, detekt, unit tests, assemble, Firestore rules tests, Compose UI tests on an emulator. Project-specific lint config (`config/detekt/detekt.yml`, `.editorconfig`) tuned against real Compose code | The emulator test job has a recurring GitHub-hosted-runner flake (`HV_UNSUPPORTED`), retried once automatically; not always enough |
-| T-06 | Domain models in `core:model` (`Record`, `PublicRecord`, `User`, `UserProfile`, `CatalogResult`, enums, `CollectionFilter`, `CollectionSort`, `SyncState`) | **`AuthRepository`/`CollectionRepository`/`UserRepository` interfaces are not implemented anywhere yet** — deliberately scoped out of T-06 (models only), not yet claimed by T-07 either. Whoever starts T-07 should resolve this first. |
-| Design-direction reconciliation | Replaced T-02's placeholder palette with the locked monochrome system (`05-DESIGN-DIRECTION.md`); rewrote `CoverPlaceholder` to show the catalogue number instead of a per-artist colour; fixed `ShelfGrid`'s column logic to match the locked spec | No screen renders `VinilogsTheme` yet — nothing to visually check until Phase 1 builds real screens |
+| T-01–T-06 | Repo scaffold, design system, navigation host, Firebase SDK wiring, CI, domain models | See the Phase 0 history further down |
+| T-07 | `core:testing` fakes for all three repository contracts + the `AuthRepository`/`CollectionRepository`/`UserRepository` interfaces themselves (T-06 deliberately left these out) | — |
+| T-08 | `FirebaseAuthRepository` — sign up/in/out, password reset, profile doc creation | — |
+| T-09 | Auth screens (sign in, sign up, forgot password), form validation, auth-state routing | — |
+| T-10 | Room schema, DAOs, mappers, SQL filter/sort/search | — |
+| T-11 | `RoomCollectionRepository` — Room as source of truth, Room→Firestore best-effort sync on write | **No Firestore→Room read-side sync exists** — see "Known issues to fix" below. `SyncWorker` (retry for failed outbound writes) also still not implemented. |
+| T-12 | Discogs Retrofit client, typed failure states, 24h cache | No screen calls it yet — that's T-16 |
+| T-14 | Firestore security rules (`users`/`records`) + rules unit tests | `publicRecords`/`reports` still deny-by-default, pending T-21 (Phase 2) |
+| T-15 | Shelf screen — grid/list, search, filter, sort, empty/error states | — |
+| T-17 | Add/edit record manual form, all FR-B4 fields, works offline | — |
+| T-18 | Record detail screen — cover, edit, share, delete with undo | — |
+| Design-direction reconciliation | Locked monochrome design system applied to `core:designsystem` | — |
+| AGP 9 / Gradle 9 migration | Done — see ADR-7 pass 5, `02-ARCHITECTURE.md` §7 | — |
 
-**Next task**: T-07 (`core:testing`: fake repositories for all three contracts, seeded with a
-~200-record fixture, coroutine test rule, Compose test helpers). Depends on T-06 (done). Per
-`03-PHASES-AND-TASKS.md`, T-07 is Phase 0's last task — after it lands, Tracks C/D/E (the
-actual feature screens) unlock to work in parallel.
+**Not started, dependencies satisfied, all three startable now:**
 
-**Note on T-07's real starting blocker**: T-07 needs to fake `AuthRepository`,
-`CollectionRepository`, `UserRepository` — none of which exist as actual interfaces yet (see
-the T-06 row above). Whoever starts T-07 needs to either write those three interfaces first
-(they're fully specified in `02-ARCHITECTURE.md` §4, just not yet typed into the repo) or
-treat writing them as part of T-07's own scope.
+- **T-13** — cover image pipeline (gallery/camera pick, Storage upload, Coil cache, placeholder). Depends on T-11 ✓.
+- **T-16** — add-record catalogue search flow (Discogs query/paginate/prefill/confirm, manual-entry escape hatch). Depends on T-07 ✓, T-12 ✓. **Fully verifiable without Firebase** — it's the only one of the three that doesn't touch Storage.
+- **T-19** — profile + edit-profile screens (avatar, bio, location, privacy toggle). Depends on T-08 ✓, T-02 ✓. `feature/auth/ProfileScreens.kt` is still three literal `StubScreen(...)` calls.
+
+Phase 2 (T-20 onward, discovery) is untouched and gated on a real decision, not code: T-20's
+Cloud Functions need Firebase's paid Blaze plan (Spark/free tier doesn't run Cloud Functions).
+Someone with Firebase console access needs to make that call before Phase 2 can start.
+
+## The app has now actually been run, for the first time ever (2026-09-28)
+
+Until this date, nothing in this repo had ever been visually rendered — every task from T-01
+onward was verified by reading code and by GitHub Actions CI, which has a permanent,
+unrelated emulator-boot flake on its Compose UI test job. See the "First things to do on a
+machine with real tooling" section below for how this finally happened and what it found.
+
+**Two real bugs were found and fixed by actually running the app:**
+
+1. **Cleartext HTTP blocked by default.** Android refuses all cleartext traffic at
+   targetSdk 28+ unless a network security config says otherwise. The Firebase emulator SDKs
+   talk plain HTTP, so every Auth/Firestore call to the local Emulator Suite failed with
+   `Cleartext HTTP traffic to <host> not permitted` until this was added. Fixed via a
+   **debug-build-only** network security config — `app/src/debug/AndroidManifest.xml` +
+   `app/src/debug/res/xml/network_security_config_debug.xml`, permitting cleartext to
+   `10.0.2.2`/`localhost`/`127.0.0.1` only. Never merged into a release build.
+2. **No Firestore→Room sync exists.** ADR-2 says "Firestore listeners write into Room"; T-11
+   only implements the other direction (Room writes push to Firestore, best-effort). Confirmed
+   by grepping `core:data` for `addSnapshotListener` — no hits outside a code comment. Symptom:
+   signed in as a seeded user with 3 existing Firestore records, the shelf showed "Your shelf
+   is empty" — Room, the shelf's actual data source, never received them. **This blocks any
+   multi-device scenario and "existing collection, new install" entirely**, and is distinct
+   from the already-documented "`SyncWorker` not implemented" gap (that one's about retrying
+   failed outbound writes, not inbound reads never happening at all). Not yet fixed — worth a
+   task of its own, probably scoped as a T-11 follow-up.
+
+**Verified working end-to-end, for the first time, against real Firebase emulators:** sign-in
+(T-09) with a seeded account, auth-state routing into the main graph, bottom-tab nav switching
+(Shelf/Discover/Profile), Discover and Profile correctly showing their T-23/T-19 stub screens,
+the T-17 add-record form (all fields, chip selectors), the new record appearing **instantly**
+on the shelf (optimistic UI, per FR-B2/B3), the T-18 record detail screen, and the
+Room→Firestore write-sync path (confirmed by querying the Firestore emulator directly — the
+new record was there). Also verified, for the first time, the project's core "offline is
+normal" claim (`00-README.md`, working rule 8): with the connection to the emulator backend
+actually severed, the shelf still rendered the existing record correctly.
+
+**Minor cosmetic bug, not yet fixed:** every screen shows a raw system title bar reading
+`app.vinilogs.MainActivity` instead of the app's own design — `AndroidManifest.xml`'s
+`<activity>` has no `android:theme`, so nothing suppresses the default action bar.
+
+**Local dev setup that made this possible** (all free, no Firebase account needed — this
+project's real bar is that it should never have needed one):
+
+- `app/google-services.json` — gitignored, not a real project. Uses a `demo-vinilogs` project
+  ID (Firebase's "demo-" prefix convention: the SDK never attempts a real network call for a
+  `demo-` project).
+- `local.properties` (gitignored) — two new keys: `firebase.useEmulator=true` and
+  `firebase.emulatorHost` (`10.0.2.2` for an AVD, `localhost` for a physical device reached via
+  `adb reverse tcp:8080/9099/9199`). Read into `BuildConfig.USE_FIREBASE_EMULATOR`/
+  `FIREBASE_EMULATOR_HOST` by `core/data/build.gradle.kts`, consumed by
+  `core/data/.../di/FirebaseModule.kt`'s `FirebaseAuth`/`FirebaseFirestore` providers — gated
+  on `BuildConfig.DEBUG` so this can never reach into a release build.
+- `cd firebase && npm install && npx firebase emulators:start --project demo-vinilogs` brings
+  up Auth (:9099), Firestore (:8080), Storage (:9199), UI (:4000) — all local, matches
+  `firebase.json`'s config.
+- `cd firebase/seed && npm install`, then with the emulators running and
+  `FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099
+  GCLOUD_PROJECT=demo-vinilogs node seed.js` seeds 3 users / 9 records (password
+  `password123` for all — see `firebase/seed/seed.js`).
+- **On this machine specifically**: the Android emulator was a dead end — no admin rights to
+  enable Windows Hypervisor Platform (x86_64 AVD acceleration), and the installed emulator
+  (37.1.11) now hard-refuses to run an ARM system image on an x86_64 host at all. A physical
+  Android phone connected via USB (with Developer Options → USB debugging on, and the on-device
+  "Allow USB debugging?" prompt accepted) was the path that actually worked.
+
+## First things to do on a machine with real tooling
+
+Mostly done now (2026-09-28), on a physical device rather than an emulator — see the section
+above. What's still outstanding from this checklist:
+
+1. ~~`git clone`, open in Android Studio, let it sync.~~ Not done via Android Studio
+   specifically, but `./gradlew build` confirms the module graph and Gradle config work outside
+   GitHub's runners.
+2. ~~`./gradlew build`~~ — done, **BUILD SUCCESSFUL**, every module, both variants.
+3. ~~`./gradlew testDebugUnitTest test`~~ — done, part of the full build above.
+4. ~~`./gradlew ktlintCheck detekt`~~ — clean on `master`.
+5. Run the app on an emulator or device — **done on a physical device**, see above. Still
+   outstanding: confirming this on an actual AVD (blocked on this machine specifically, not a
+   project problem — see the admin-rights/ARM-image notes above), and:
+   - Switching bottom-bar tabs after navigating into a sub-screen restoring each tab's own
+     position (`saveState`/`restoreState`) — **not yet explicitly tested**.
+6. `./gradlew connectedDebugAndroidTest` — **still not run for real anywhere.** The 6 Compose UI
+   tests have never executed outside CI's permanently-flaky emulator job. Now that a physical
+   device works, this is finally possible — worth doing before trusting those tests further.
+
+## Known issues to fix (found 2026-09-28, not yet fixed)
+
+- **No Firestore→Room sync** (T-11 gap) — see above. Highest-priority of the two.
+- **No app theme set** on `MainActivity` — raw system title bar shows instead of the app's own
+  chrome. Quick fix, `AndroidManifest.xml` + whatever theme `core:designsystem` already defines.
+- **Bottom-tab `saveState`/`restoreState` behaviour** — still unconfirmed.
+- **`./gradlew connectedDebugAndroidTest`** — still never run for real; do this now that a
+  physical device is available.
 
 ## Known gotchas from this session (2026-08-24 to 2026-08-26)
 
@@ -159,6 +144,8 @@ Gradle wrapper, an unavailable Compose API, and ktlint/detekt configs that had n
 clean. All are fixed now, but the pattern is worth remembering: **written and verified are not
 the same claim for anything in this repo's early history** — if something behaves
 unexpectedly, check whether it was ever actually compiled before assuming the logic is wrong.
+(The 2026-09-28 findings above are a second instance of the same pattern, one layer up: CI-green
+and "a human looked at it" are not the same claim either.)
 
 **The systemic accessor bug** (now documented in `CLAUDE.md`): type-safe multi-segment
 `libs.foo.bar` *library* accessors don't resolve anywhere in the root build, while
@@ -182,12 +169,15 @@ file — already present in `ci.yml` for this reason) first; if that also fails,
 from the Actions tab in-browser is what unstuck it last time.
 
 **Branch topology**: `master` and `feat/T-01-repo-scaffold` diverged after PR #1 (T-01's own
-merge) and were never reconciled until the "Phase 0 complete" PR mentioned above. If you're
-starting fresh work and `git log master` doesn't show T-02 or later, that PR hasn't merged —
-branch from `feat/T-01-repo-scaffold` instead, or better, get that PR merged first.
+merge) and were reconciled by PR #10, "Phase 0 complete" (2026-08-26). Every task since T-07
+has merged straight to `master`. A local `master` branch can go stale for weeks without anyone
+noticing if nothing pulls it — `git fetch && git rev-list --left-right --count
+master...origin/master` before trusting a local checkout's history.
 
 **Repo-level branch protection blocks force-push and branch deletion** on every branch
 (likely enabled when the repo went public). A handful of disposable `tmp/*-verify*` branches
-used for one-off CI verification during this session couldn't be cleaned up as a result —
-they're harmless and unreferenced by any open PR; delete them manually via GitHub if it
-bothers you.
+used for one-off CI verification during the Phase 0 session couldn't be cleaned up as a
+result — they're harmless and unreferenced by any open PR; delete them manually via GitHub if
+it bothers you. The same is true of five `.claude/worktrees/agent-*` / `worktree-*` local
+worktrees left over from parallel-agent sessions — all confirmed fully merged into `master`,
+safe to `git worktree remove` whenever convenient.

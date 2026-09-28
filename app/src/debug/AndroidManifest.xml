@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+      Debug-build-only manifest override, merged on top of src/main/AndroidManifest.xml.
+      Points the debug build at network_security_config_debug.xml so it can reach the local
+      Firebase Emulator Suite (plain HTTP), see that file's comment and
+      core/data/.../di/FirebaseModule.kt. Never merged into a release build.
+    -->
+    <application android:networkSecurityConfig="@xml/network_security_config_debug" />
+
+</manifest>

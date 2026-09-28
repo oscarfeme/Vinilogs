@@ -4,19 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-**Phase 0 is code-complete and CI-verified as of 2026-08-26** (T-01 through T-06, plus a
-design-direction reconciliation — see `PROGRESS.md` for the full task-by-task history). All
-modules exist with real implementations: `app`, `core:{designsystem,model,data,testing}`,
-`feature:{auth,collection,discovery}`, `build-logic`. GitHub Actions CI (ktlint, detekt, unit
-tests, assemble, Firestore rules tests, Compose UI tests on an emulator) is wired and green.
+**As of 2026-09-28: 16 of 38 tasks merged to `master`** — Phase 0 complete (T-01–T-07), Phase 1
+at 9/12 (T-08–T-12, T-14, T-15, T-17, T-18 done; T-13 covers, T-16 catalogue search, T-19
+profile all unstarted but unblocked). See `PROGRESS.md` for the full task-by-task history and
+current status — it is kept up to date and is more current than this file for anything
+task-level. AGP 9 / Gradle 9 migration (ADR-7 pass 5, `02-ARCHITECTURE.md` §7) is done and
+merged; local builds are green.
 
-**What "CI-verified" does *not* mean**: nothing in this repo has ever been built, run, or
-tested on a real device, emulator, or local machine — every verification so far happened via
-GitHub-hosted CI runners, because the sandbox this was built in had no JDK, Android SDK, or
-emulator. **If you're reading this on a machine that has real Android tooling, the single
-highest-value thing to do is the manual verification pass in `PROGRESS.md`'s "First things to
-do on a machine with real tooling" section** — that's the biggest unclosed gap in the project
-right now, bigger than any specific next task.
+**The app has been built, run, and manually driven on a real physical device** (2026-09-28,
+against the local Firebase Emulator Suite — see `PROGRESS.md`'s "The app has now actually been
+run" section for what that found, including a real bug: T-11 only syncs Room→Firestore, not
+the reverse, so a fresh sign-in never receives an existing Firestore collection). Before that
+date, nothing in this repo had ever been visually rendered — every verification happened via
+GitHub Actions CI (which has a permanent, code-unrelated emulator-boot flake on its Compose UI
+test job) or by reading code. Treat "CI green" and "a human looked at it" as different claims
+for anything merged before 2026-09-28.
 
 Real commands, now that they are known:
 - `./gradlew build` — full build
@@ -132,8 +134,20 @@ Rules that shape every change in this layer:
   did not work.
 - Firebase projects do not exist. `vinilogs-dev`/`vinilogs-prod` were never created — that
   needs a human with Firebase console access, documented step-by-step in `firebase/README.md`.
-  Nothing Firebase-related (Auth, Firestore sync, Storage) can be tested end-to-end until this
-  happens.
+  Nothing can be tested against a **real** Firebase project until this happens — but the local
+  Firebase Emulator Suite works today, no account needed (see the next point and
+  `firebase/README.md`'s "Day-to-day" section).
+- Running a debug build against the local Firebase Emulator Suite needs two things neither of
+  which exists by default: `app/google-services.json` (gitignored; use a `demo-`prefixed
+  project ID, matched by `local.properties`' `firebase.useEmulator=true` flag — see
+  `core/data/build.gradle.kts` and `core/data/.../di/FirebaseModule.kt`), and a debug-only
+  network security config permitting cleartext HTTP to the emulator host
+  (`app/src/debug/res/xml/network_security_config_debug.xml`) — **Android blocks all cleartext
+  traffic by default at targetSdk 28+, and the emulator SDKs talk plain HTTP, not HTTPS.**
+  Without that config every Auth/Firestore emulator call fails with "Cleartext HTTP traffic to
+  \<host\> not permitted", discovered the hard way on this project's first real device run
+  (2026-09-28). Both pieces already exist in the repo as of that date; this note is here so the
+  next person doesn't have to rediscover the cleartext error from scratch.
 
 ## Working rules for agents
 

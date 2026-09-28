@@ -42,23 +42,62 @@ firebase emulators:start
 ```
 
 This starts Auth (`:9099`), Firestore (`:8080`), Storage (`:9199`) and the Emulator UI
-(`:4000`), using `firestore.rules` / `storage.rules` from this directory. Point the app at
-the emulators the same way the Firebase Android SDKs always do:
-`FirebaseFirestore.useEmulator("10.0.2.2", 8080)` etc. from an emulator/debug build (wired up
-by whichever task first needs it — T-08 for Auth, T-11 for Firestore, T-13 for Storage).
+(`:4000`), using `firestore.rules` / `storage.rules` from this directory.
+
+**Pointing the app at the emulators (Auth + Firestore) is already wired** — set two keys in
+the repo-root `local.properties` (gitignored, not committed):
+
+```
+firebase.useEmulator=true
+firebase.emulatorHost=10.0.2.2
+```
+
+`10.0.2.2` is the AVD's alias for the host machine; use `localhost` instead for a physical
+device reached via `adb reverse tcp:8080 tcp:8080` / `adb reverse tcp:9099 tcp:9099` (and
+`tcp:9199` once Storage is wired — see below). `core/data/build.gradle.kts` reads these into
+`BuildConfig.USE_FIREBASE_EMULATOR`/`FIREBASE_EMULATOR_HOST`; `core/data/.../di/
+FirebaseModule.kt` calls `.useEmulator(...)` on `FirebaseAuth`/`FirebaseFirestore` when that
+flag is set **and** the build is debuggable — a release build can never reach a local
+emulator even if the flag is left set by mistake. **Storage isn't wired yet** — that's T-13.
+
+You also need `app/google-services.json` to exist at all (gitignored, the build skips
+`google-services` entirely without it) — for local emulator work it doesn't need to be real; a
+`demo-`prefixed project ID (e.g. `demo-vinilogs`) is Firebase's own convention for "never
+attempts a real network call", and matches an emulator suite started with
+`firebase emulators:start --project demo-vinilogs`. `app/google-services.json.example` shows
+the shape.
+
+One more thing Android needs and easy to miss: it blocks all cleartext (plain HTTP) traffic by
+default at targetSdk 28+, and the emulator SDKs talk plain HTTP, not HTTPS. Without a network
+security config permitting cleartext to the emulator host, every call fails with `Cleartext
+HTTP traffic to <host> not permitted`. `app/src/debug/res/xml/network_security_config_debug.xml`
+(+ `app/src/debug/AndroidManifest.xml` wiring it in) already handles this, scoped to
+`10.0.2.2`/`localhost`/`127.0.0.1` and to debug builds only.
 
 ## Seed data
 
+Either let `emulators:exec` start-run-teardown the emulators for you:
+
 ```
 cd firebase
-firebase emulators:exec --project vinilogs-dev "cd seed && npm install && npm run seed"
+firebase emulators:exec --project demo-vinilogs "cd seed && npm install && npm run seed"
 ```
 
-Creates three Auth users and their `users/{uid}` profile + `users/{uid}/records` documents per
-the data model in `02-ARCHITECTURE.md` §3 (see `seed/seed.js` for exact records). All seed
-accounts use password `password123`. `emulators:exec` is important here — it starts the
-emulators, runs the script against `FIRESTORE_EMULATOR_HOST`/`FIREBASE_AUTH_EMULATOR_HOST`,
-then tears them down; the script refuses to run against anything else.
+...or, if the emulators are already running (e.g. you want the app to keep talking to them
+afterward, which `emulators:exec`'s teardown would break), run the seed script directly against
+them instead:
+
+```
+cd firebase/seed && npm install
+FIRESTORE_EMULATOR_HOST=localhost:8080 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 \
+  GCLOUD_PROJECT=demo-vinilogs node seed.js
+```
+
+Use whichever project ID matches what `app/google-services.json` declares (`demo-vinilogs` if
+you're following this README's local-dev convention above; `vinilogs-dev` if you're pointed at
+a real dev project instead). Creates three Auth users and their `users/{uid}` profile +
+`users/{uid}/records` documents per the data model in `02-ARCHITECTURE.md` §3 (see
+`seed/seed.js` for exact records). All seed accounts use password `password123`.
 
 Note: the seeded users with `isPublic: true` won't show up in discovery until T-20's
 `onRecordWritten`/`onProfileUpdated` functions exist to build the `publicRecords` projection —
