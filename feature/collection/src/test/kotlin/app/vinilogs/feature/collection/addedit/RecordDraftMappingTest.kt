@@ -1,5 +1,6 @@
 package app.vinilogs.feature.collection.addedit
 
+import app.vinilogs.core.model.CatalogResult
 import app.vinilogs.core.model.Condition
 import app.vinilogs.core.model.Format
 import app.vinilogs.core.model.Speed
@@ -58,5 +59,53 @@ class RecordDraftMappingTest {
         assertEquals(Format.SEVEN, roundTripped.format)
         assertEquals(Speed.RPM45, roundTripped.speed)
         assertEquals(Condition.VERY_GOOD_PLUS, roundTripped.condition)
+    }
+
+    @Test
+    fun `CatalogResult toDraft prefills identity fields, leaving format-speed-condition at defaults -- FR-B2`() {
+        val result =
+            CatalogResult(
+                discogsId = 12345L,
+                artist = "Miles Davis",
+                title = "Kind of Blue",
+                year = 1959,
+                label = "Columbia",
+                catalogNumber = "CL 1355",
+                coverUrl = "https://example.com/cover.jpg",
+            )
+
+        val draft = result.toDraft()
+
+        assertEquals("Miles Davis", draft.artist)
+        assertEquals("Kind of Blue", draft.title)
+        assertEquals("1959", draft.year)
+        assertEquals("Columbia", draft.label)
+        assertEquals("CL 1355", draft.catalogNumber)
+        assertEquals("https://example.com/cover.jpg", draft.coverUrl)
+        // Defaults, per RecordDraft() -- FR-B2 "all prefilled fields remain editable" means the
+        // user sets these, not Discogs (see CatalogResult.toDraft's doc comment for why).
+        assertEquals(Format.LP, draft.format)
+        assertEquals(Condition.NEAR_MINT, draft.condition)
+    }
+
+    @Test
+    fun `CatalogResult toDraft with a null year and label leaves those fields blank, not the string null`() {
+        val result =
+            CatalogResult(
+                discogsId = 1L,
+                artist = "A",
+                title = "B",
+                year = null,
+                label = null,
+                catalogNumber = null,
+                coverUrl = null,
+            )
+
+        val draft = result.toDraft()
+
+        assertEquals("", draft.year)
+        assertEquals("", draft.label)
+        assertEquals("", draft.catalogNumber)
+        assertNull(draft.coverUrl)
     }
 }

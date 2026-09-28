@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.vinilogs.core.data.repository.CollectionRepository
+import app.vinilogs.core.model.CatalogResult
 import app.vinilogs.core.model.Record
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,6 +37,15 @@ internal class AddEditRecordViewModel
         /** The record as last loaded from the repository, for [save] to preserve `discogsId`/`createdAt` from. */
         private var loadedRecord: Record? = null
 
+        /**
+         * Set by [applyCatalogResult] (T-16's search-to-confirm handoff) when this ADD-mode
+         * instance was reached by picking a catalogue search result rather than "Add manually".
+         * [loadedRecord] stays the source of truth for EDIT mode; this is ADD mode's equivalent
+         * so a record saved from a search hit keeps its Discogs link (02-ARCHITECTURE.md §3:
+         * `discogsId: number? // null when manually entered`).
+         */
+        private var catalogDiscogsId: Long? = null
+
         private val _uiState = MutableStateFlow(AddEditRecordUiState(mode = mode, isLoading = mode == AddEditMode.EDIT))
         val uiState: StateFlow<AddEditRecordUiState> = _uiState.asStateFlow()
 
@@ -61,6 +71,12 @@ internal class AddEditRecordViewModel
             _uiState.update { it.copy(draft = transform(it.draft), errors = RecordDraftErrors(), saveError = null) }
         }
 
+        /** FR-B2: prefills the draft from a picked catalogue search result. ADD mode only. */
+        fun applyCatalogResult(result: CatalogResult) {
+            catalogDiscogsId = result.discogsId
+            _uiState.update { it.copy(draft = result.toDraft(), errors = RecordDraftErrors(), saveError = null) }
+        }
+
         fun save() {
             val draft = _uiState.value.draft
             val errors = draft.validate()
@@ -77,7 +93,7 @@ internal class AddEditRecordViewModel
                 val record =
                     draft.toRecord(
                         id = recordId.orEmpty(),
-                        discogsId = loadedRecord?.discogsId,
+                        discogsId = loadedRecord?.discogsId ?: catalogDiscogsId,
                         createdAt = loadedRecord?.createdAt ?: Instant.now(),
                     )
                 val result =
